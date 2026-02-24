@@ -8,7 +8,7 @@ import {
   users,
   userTagAssignments,
 } from '@/db/schema'
-import { eq, and, sql, asc, lt, or, gt, desc } from 'drizzle-orm'
+import { eq, and, sql, asc, lt, or, gt, desc, ne } from 'drizzle-orm'
 
 // ─── getRegistrationForUser ──────────────────────────────
 
@@ -128,12 +128,12 @@ export async function hasTimeOverlap(
     eq(registrations.userId, userId),
     eq(registrations.status, 'confirmed'),
     // Overlap: existing.startAt < new.endAt AND existing.endAt > new.startAt
-    sql`${events.startAt} < ${endAt}`,
-    sql`${events.endAt} > ${startAt}`,
+    lt(events.startAt, endAt),
+    gt(events.endAt, startAt),
   ]
 
   if (excludeEventId) {
-    conditions.push(sql`${registrations.eventId} != ${excludeEventId}`)
+    conditions.push(ne(registrations.eventId, excludeEventId))
   }
 
   return db

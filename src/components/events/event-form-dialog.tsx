@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import type { Event } from '@/db/schema'
 import { Sectors } from '@/types/enums'
@@ -94,51 +94,59 @@ export function EventFormDialog({
   const isEdit = !!event
   const [isPending, startTransition] = useTransition()
 
+  const emptyValues: FormValues = {
+    title: '',
+    type: 'interno',
+    sectors: [],
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+    location: '',
+    capacity: '',
+    minVolunteers: '',
+    notes: '',
+    cancellationDeadlineHours: '',
+    waitlistLimit: '',
+    reminderHours: '',
+    attendanceGracePeriodHours: '48',
+  }
+
+  function eventToFormValues(e: Event): FormValues {
+    return {
+      title: e.title,
+      type: e.type,
+      sectors: e.sectors ?? [],
+      startDate: toLocalDateStr(e.startAt),
+      startTime: toLocalTimeStr(e.startAt),
+      endDate: toLocalDateStr(e.endAt),
+      endTime: toLocalTimeStr(e.endAt),
+      location: e.location ?? '',
+      capacity: String(e.capacity ?? ''),
+      minVolunteers: e.minVolunteers ? String(e.minVolunteers) : '',
+      notes: e.notes ?? '',
+      cancellationDeadlineHours: e.cancellationDeadlineHours
+        ? String(e.cancellationDeadlineHours)
+        : '',
+      waitlistLimit: e.waitlistLimit ? String(e.waitlistLimit) : '',
+      reminderHours: e.reminderHours ? String(e.reminderHours) : '',
+      attendanceGracePeriodHours: e.attendanceGracePeriodHours
+        ? String(e.attendanceGracePeriodHours)
+        : '',
+    }
+  }
+
   const form = useForm<FormValues>({
-    defaultValues: event
-      ? {
-          title: event.title,
-          type: event.type,
-          sectors: event.sectors ?? [],
-          startDate: toLocalDateStr(event.startAt),
-          startTime: toLocalTimeStr(event.startAt),
-          endDate: toLocalDateStr(event.endAt),
-          endTime: toLocalTimeStr(event.endAt),
-          location: event.location ?? '',
-          capacity: String(event.capacity ?? ''),
-          minVolunteers: event.minVolunteers ? String(event.minVolunteers) : '',
-          notes: event.notes ?? '',
-          cancellationDeadlineHours: event.cancellationDeadlineHours
-            ? String(event.cancellationDeadlineHours)
-            : '',
-          waitlistLimit: event.waitlistLimit
-            ? String(event.waitlistLimit)
-            : '',
-          reminderHours: event.reminderHours
-            ? String(event.reminderHours)
-            : '',
-          attendanceGracePeriodHours: event.attendanceGracePeriodHours
-            ? String(event.attendanceGracePeriodHours)
-            : '',
-        }
-      : {
-          title: '',
-          type: 'interno',
-          sectors: [],
-          startDate: '',
-          startTime: '',
-          endDate: '',
-          endTime: '',
-          location: '',
-          capacity: '',
-          minVolunteers: '',
-          notes: '',
-          cancellationDeadlineHours: '',
-          waitlistLimit: '',
-          reminderHours: '',
-          attendanceGracePeriodHours: '48',
-        },
+    defaultValues: event ? eventToFormValues(event) : emptyValues,
   })
+
+  // Reset form values when dialog opens or event changes
+  useEffect(() => {
+    if (open) {
+      form.reset(event ? eventToFormValues(event) : emptyValues)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, event])
 
   const watchType = form.watch('type')
 
@@ -255,7 +263,7 @@ export function EventFormDialog({
                       <FormLabel>Tipo</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="w-full">

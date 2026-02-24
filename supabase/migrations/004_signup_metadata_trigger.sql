@@ -10,8 +10,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  _role text;
-  _status text;
+  _role user_role;
+  _status user_status;
   _meta jsonb;
 BEGIN
   _meta := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
