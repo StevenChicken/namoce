@@ -4,6 +4,8 @@ import { getPublishedApertoEventsWithCounts } from '@/features/events/queries'
 import { PublicEventsView } from '@/components/events/public-events-view'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Eventi aperti al pubblico — Namo APS',
   description:
