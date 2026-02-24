@@ -1,0 +1,91 @@
+import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
+import { requireSuperAdmin } from '@/lib/auth'
+import { getAuditLogEntries, getAuditActors } from '@/features/audit/queries'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FileText } from 'lucide-react'
+import { AuditLogFilters } from '@/components/admin/audit-log-filters'
+import { AuditLogTable } from '@/components/admin/audit-log-table'
+import { AuditPagination } from '@/components/admin/audit-pagination'
+
+const ITEMS_PER_PAGE = 50
+
+export default async function AdminAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>
+}) {
+  try {
+    await requireSuperAdmin()
+  } catch {
+    redirect('/calendario')
+  }
+
+  const params = await searchParams
+  const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
+  const actorId = params.actor || undefined
+  const actionType = params.actionType || undefined
+  const startDate = params.startDate ? new Date(params.startDate) : undefined
+  const endDate = params.endDate
+    ? new Date(params.endDate + 'T23:59:59.999Z')
+    : undefined
+
+  const [{ entries, totalCount }, actors] = await Promise.all([
+    getAuditLogEntries({
+      actorId,
+      actionType,
+      startDate,
+      endDate,
+      page,
+      limit: ITEMS_PER_PAGE,
+    }),
+    getAuditActors(),
+  ])
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE))
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-3">
+        <FileText className="h-7 w-7 text-namo-charcoal" />
+        <h1 className="text-2xl font-bold">Log audit</h1>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtri</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={null}>
+            <AuditLogFilters actors={actors} />
+          </Suspense>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Registro attività
+            <span className="text-sm font-normal text-muted-foreground">
+              ({totalCount} {totalCount === 1 ? 'voce' : 'voci'})
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {entries.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">
+              Nessuna voce trovata
+            </p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <AuditLogTable entries={entries} />
+              <Suspense fallback={null}>
+                <AuditPagination currentPage={page} totalPages={totalPages} />
+              </Suspense>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

@@ -1,0 +1,29 @@
+-- =====================================================
+-- Namo: Seed Data for Development
+-- =====================================================
+--
+-- INSTRUCTIONS:
+-- 1. Create a Supabase project
+-- 2. Run the Drizzle migrations first (pnpm db:push)
+-- 3. Run the RLS migration (supabase/migrations/001_rls_policies.sql)
+-- 4. Sign up via the app with one of the super admin emails:
+--    - stefano.pollastri25@gmail.com
+--    - giu.pollastri@gmail.com
+--    The trigger will auto-assign super_admin role and active status.
+--
+-- For a debug admin that bypasses email verification:
+-- Run this AFTER creating the auth user via Supabase Dashboard > Authentication > Add user:
+--
+-- UPDATE public.users
+-- SET role = 'super_admin', status = 'active', first_name = 'Admin', last_name = 'Debug'
+-- WHERE email = 'your-debug-email@example.com';
+--
+
+-- Sample user tags (run after at least one super_admin exists)
+-- INSERT INTO public.user_tags (name, description, created_by)
+-- SELECT 'Clown Terapia Certificato', 'Volontario certificato per attività di Clown Terapia', id
+-- FROM public.users WHERE role = 'super_admin' LIMIT 1;
+--
+-- INSERT INTO public.user_tags (name, description, created_by)
+-- SELECT 'Primo Soccorso', 'Certificazione di primo soccorso', id
+-- FROM public.users WHERE role = 'super_admin' LIMIT 1;

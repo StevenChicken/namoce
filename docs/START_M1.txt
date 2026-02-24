@@ -1,0 +1,554 @@
+I will give you the project I want to vibe code. You will study all of it. Ask clarification questions to make sure you do exactly as I want and then spin a team of well orchestrated agents
+
+
+================================================================================
+NAMO — MILESTONE 1: FOUNDATION
+Kick-off prompt for Claude Code — paste this in full at the start of a new session
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+STEP 0 — READ CONTEXT FIRST (do this before writing a single line of code)
+────────────────────────────────────────────────────────────────────────────────
+
+Read all three of these files in full before doing anything else:
+
+  1. CLAUDE.md                    — coding conventions, stack, folder structure,
+                                    skills reference, definition of done
+  2. DESIGN_GUIDE.md              — visual language, colour palette, typography,
+                                    component style
+  3. Namo_Product_Spec_MVP.md     — full product requirements; for M1 focus on:
+                                    § 3 (User Roles & Personas)
+                                    § 5 (Permissions Matrix)
+                                    § 6.1 (New Volunteer Registration journey)
+                                    § 7 AUTH-01 → AUTH-07
+                                    § 7 USER-01 → USER-04
+                                    § 9 (Data Model — all tables)
+
+Do not proceed until you have read all three.
+
+────────────────────────────────────────────────────────────────────────────────
+GOAL — MILESTONE 1: FOUNDATION
+────────────────────────────────────────────────────────────────────────────────
+
+Build the complete foundation of the Namo web app. At the end of M1 the app must:
+
+  ✓ Run locally with `pnpm dev`
+  ✓ Have all 8 database tables defined in Drizzle schema
+  ✓ Have RLS policies applied to all tables
+  ✓ Support email+password login and Google OAuth for internal users
+  ✓ New volunteer self-registration flow (creates account with status=pending)
+  ✓ Admin approval of pending volunteers (sets status=active, sends email)
+  ✓ Account approval email sent via Resend
+  ✓ Protected routing: pending/unauthenticated users cannot access the app
+  ✓ Persistent layout with navigation (mobile + desktop)
+  ✓ Placeholder pages for all main sections (no content yet — just routing)
+  ✓ `pnpm typecheck` and `pnpm lint` pass with zero errors
+
+────────────────────────────────────────────────────────────────────────────────
+TECH STACK (do not deviate from this)
+────────────────────────────────────────────────────────────────────────────────
+
+  Framework     : Next.js 15 (App Router, TypeScript strict mode)
+  Database/Auth : Supabase (PostgreSQL + RLS + Supabase Auth)
+  ORM           : Drizzle ORM
+  UI            : shadcn/ui + Tailwind CSS
+  Email         : Resend + React Email
+  Package mgr   : pnpm (never npm or yarn)
+  Validation    : zod (on all Server Actions and API routes)
+
+────────────────────────────────────────────────────────────────────────────────
+STEP-BY-STEP BUILD ORDER
+────────────────────────────────────────────────────────────────────────────────
+
+Follow this order exactly. Complete and verify each step before moving to the next.
+
+──────────────────────────────────────
+STEP 1 — Project scaffold
+──────────────────────────────────────
+
+  Invoke skill: /nextjs-best-practices  (read before scaffolding)
+
+  1a. Create a new Next.js 15 project with TypeScript and App Router:
+        pnpm create next-app@latest namo --typescript --app --no-src-dir --tailwind --eslint
+      Then immediately move files into the /src directory structure defined in CLAUDE.md.
+
+  1b. Install all required dependencies in one shot:
+        pnpm add @supabase/supabase-js @supabase/ssr drizzle-orm @neondatabase/serverless
+        pnpm add drizzle-zod zod react-hook-form @hookform/resolvers
+        pnpm add resend @react-email/components @react-email/render
+        pnpm add @sentry/nextjs
+        pnpm add -D drizzle-kit vitest @vitejs/plugin-react playwright @playwright/test
+        pnpm add -D @types/node
+
+  1c. Install and initialise shadcn/ui:
+      Invoke skill: /shadcn-ui  (read before running the init)
+        pnpm dlx shadcn@latest init
+      Accept defaults. Then install these components upfront:
+        pnpm dlx shadcn@latest add button input label form card badge
+        pnpm dlx shadcn@latest add dialog alert toast separator avatar
+        pnpm dlx shadcn@latest add dropdown-menu navigation-menu table
+        pnpm dlx shadcn@latest add select checkbox textarea skeleton
+
+  1d. Configure Tailwind theme tokens from DESIGN_GUIDE.md:
+      Invoke skill: /tailwind-theme-builder
+      Apply the colour palette, typography scale, and spacing defined in DESIGN_GUIDE.md
+      to tailwind.config.ts. Use CSS variables for the colour tokens so shadcn/ui
+      inherits them automatically.
+
+  1e. Create .env.local with the required variable names (empty values — add note
+      explaining where to get each one):
+        NEXT_PUBLIC_SUPABASE_URL=
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=
+        NEXT_PUBLIC_APP_URL=http://localhost:3000
+        SUPABASE_SERVICE_ROLE_KEY=
+        RESEND_API_KEY=
+
+  1f. Add these scripts to package.json:
+        "typecheck": "tsc --noEmit",
+        "db:generate": "drizzle-kit generate",
+        "db:push": "drizzle-kit push",
+        "db:studio": "drizzle-kit studio",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:e2e": "playwright test"
+
+  1g. Run `pnpm typecheck` — must pass before continuing.
+
+──────────────────────────────────────
+STEP 2 — Supabase client helpers
+──────────────────────────────────────
+
+  Invoke skill: /nextjs-supabase-auth  (read before writing any client code)
+
+  Create the following files exactly as described in the skill + CLAUDE.md:
+
+  src/lib/supabase/server.ts
+    → createServerClient() using @supabase/ssr + cookies() from next/headers
+    → Used in Server Components, Server Actions, Route Handlers
+
+  src/lib/supabase/browser.ts
+    → createBrowserClient() using @supabase/ssr
+    → Used in Client Components only
+
+  src/lib/supabase/middleware.ts
+    → createMiddlewareClient() helper for use in middleware.ts
+
+  CRITICAL: SUPABASE_SERVICE_ROLE_KEY must NEVER be used in client-side code.
+  The server client using the anon key + RLS is sufficient for most server operations.
+  Only use the service role key for admin operations that must bypass RLS (e.g. account
+  suspension invalidating all sessions). Clearly comment every usage.
+
+──────────────────────────────────────
+STEP 3 — Middleware and route protection
+──────────────────────────────────────
+
+  Invoke skill: /nextjs-supabase-auth  (covers middleware patterns)
+
+  Create src/middleware.ts that:
+    - Refreshes the Supabase session on every request (required by @supabase/ssr)
+    - Protects all routes under /(app)/* — redirects unauthenticated users to /accedi
+    - Protects all routes under /(app)/admin/* — redirects non-admins to /dashboard
+    - Allows public access to /eventi/*, /api/*, /(auth)/* without session
+
+  Create the route groups exactly as defined in CLAUDE.md § 3:
+    src/app/(auth)/               — public auth pages
+    src/app/(app)/                — protected volunteer pages
+    src/app/(app)/admin/          — admin-only pages
+    src/app/eventi/               — public event listing (no auth required)
+
+──────────────────────────────────────
+STEP 4 — Drizzle schema (ALL tables)
+──────────────────────────────────────
+
+  Invoke skill: /drizzle-orm  (read before writing the schema)
+
+  Create src/db/schema.ts with ALL 8 tables defined completely.
+  Use the exact field names, types, and enums from CLAUDE.md § 4 and
+  Namo_Product_Spec_MVP.md § 9.1.
+
+  Tables to define (in dependency order):
+    1. users
+    2. user_tags
+    3. user_tag_assignments
+    4. events
+    5. registrations
+    6. external_registrations
+    7. audit_log
+    8. notification_preferences
+
+  Important schema rules:
+    - All primary keys: UUID, default random UUID
+    - All timestamps: timestamp with timezone, default now()
+    - phone fields: text (will store encrypted value — encryption handled at app layer)
+    - users.role enum: 'super_admin' | 'volontario'
+    - users.status enum: 'pending' | 'active' | 'suspended' | 'deactivated'
+    - events.type enum: 'interno' | 'aperto'
+    - events.status enum: 'draft' | 'published' | 'cancelled' | 'archived'
+    - registrations.status enum: 'confirmed' | 'waitlist' | 'cancelled'
+    - registrations.cancellation_type enum: 'normal' | 'late'
+    - registrations.attendance_status enum: 'present' | 'absent' | 'no_show'
+    - external_registrations.status enum: 'confirmed' | 'cancelled'
+    - audit_log: NO updatedAt field — it is append-only by design
+    - events.sectors[]: use text array (text[])
+    - events.required_tags[]: use UUID array (uuid[])
+
+  Export all types inferred from the schema:
+    export type User = typeof users.$inferSelect
+    export type NewUser = typeof users.$inferInsert
+    ... (same pattern for all tables)
+
+  Create src/db/index.ts:
+    → Initialise Drizzle client with the Supabase PostgreSQL connection string
+    → Export the `db` instance
+
+  Create drizzle.config.ts at project root with correct dialect and schema path.
+
+  After writing the schema, run:
+    pnpm db:generate   — generate the migration SQL
+    pnpm db:push       — apply to the local Supabase instance
+
+  Create src/types/enums.ts:
+    → Re-export all enum values as TypeScript const objects (for use in UI code
+      without importing from Drizzle schema directly)
+
+──────────────────────────────────────
+STEP 5 — RLS policies
+──────────────────────────────────────
+
+  Invoke skill: /supabase-postgres-best-practices  (read before writing any SQL)
+
+  Create supabase/migrations/001_rls_policies.sql with RLS policies for all 8 tables.
+  Base them on the rules in CLAUDE.md § 5 and Namo_Product_Spec_MVP.md § 9.2.
+
+  Mandatory policies to implement:
+
+  users table:
+    - Enable RLS
+    - SELECT: own row for volontario; all rows for super_admin
+    - UPDATE: own non-sensitive fields for volontario; all for super_admin
+    - phone_encrypted column: SELECT restricted to super_admin only
+      (use a column-level security policy or a separate view)
+    - INSERT: only via service role (registration is handled server-side)
+    - DELETE: only via service role
+
+  user_tags table:
+    - SELECT: authenticated users can read all tags
+    - INSERT/UPDATE/DELETE: super_admin only
+
+  user_tag_assignments table:
+    - SELECT: own assignments for volontario; all for super_admin
+    - INSERT/DELETE: super_admin only
+
+  events table:
+    - SELECT: published+interno OR published+aperto for authenticated users;
+              published+aperto only for unauthenticated (anon);
+              all rows for super_admin
+    - INSERT/UPDATE/DELETE: super_admin only
+
+  registrations table:
+    - SELECT: own rows for volontario; all rows for super_admin
+    - INSERT: own rows for volontario (capacity check handled at app layer)
+    - UPDATE: own rows for volontario (status transitions only); all for super_admin
+    - DELETE: no one — use status='cancelled' instead of DELETE
+
+  external_registrations table:
+    - SELECT: super_admin only (no self-service view for external users)
+    - INSERT: anon (public) — for registration
+    - UPDATE: super_admin only (cancellation via tokenised route done server-side)
+    - DELETE: super_admin only (GDPR deletion)
+
+  audit_log table:
+    - SELECT: super_admin only
+    - INSERT: authenticated users (app writes via server action)
+    - UPDATE: nobody
+    - DELETE: nobody
+
+  notification_preferences table:
+    - SELECT/UPDATE: own row for volontario; all for super_admin
+    - INSERT: own row for volontario (created on account approval)
+
+  Apply the migration to local Supabase after writing it.
+  Test each policy using the Supabase SQL editor with different role contexts.
+
+──────────────────────────────────────
+STEP 6 — Authentication pages
+──────────────────────────────────────
+
+  Invoke skill: /nextjs-supabase-auth  (covers auth page patterns)
+  Invoke skill: /shadcn-ui             (for form component patterns)
+
+  Build these pages under src/app/(auth)/:
+
+  /accedi  (Login page)
+    - Email + password form using shadcn Form + react-hook-form + zod
+    - "Accedi con Google" button (Google OAuth)
+    - Link to /registrati
+    - Link to /recupera-password
+    - On success: redirect to /(app)/calendario
+    - On error (wrong password, unverified): Italian error message inline
+    - If account status=pending: redirect to /in-attesa (pending screen)
+    - If account status=suspended: show "Account sospeso. Contatta un coordinatore."
+
+  /registrati  (New volunteer registration)
+    Fields (all required unless noted):
+      - Nome (first_name)
+      - Cognome (last_name)
+      - Email (unique, validated)
+      - Telefono (phone)
+      - Nickname (optional)
+      - Settori di interesse (multi-select checkboxes):
+          Clown Terapia | Laboratori Scuole | Compagno Adulto | Riunioni | Eventi Speciali
+      - Note / competenze particolari (textarea, optional)
+      - Privacy policy checkbox (required — link to /privacy)
+    On submit:
+      - Validate all fields with zod
+      - Check for duplicate email (return Italian error if exists)
+      - Create user with status=pending via server action (use service role)
+      - Create notification_preferences row (informational_emails_enabled=true)
+      - Show success message: "La tua registrazione è stata inviata. Riceverai
+        un'email quando il tuo account sarà approvato."
+    Spec reference: AUTH-03, USER-01, journey 6.1
+
+  /recupera-password  (Password reset request)
+    - Email field + submit button
+    - On submit: call Supabase Auth resetPasswordForEmail()
+    - Show: "Se l'email è registrata, riceverai un link per reimpostare la password."
+    - Always show success message (do not reveal whether email exists — security)
+
+  /reimposta-password  (Password reset — landing page from email link)
+    - New password + confirm password fields
+    - On submit: call Supabase Auth updateUser()
+    - On success: redirect to /accedi with success toast
+    - On expired link: show error "Il link è scaduto. Richiedine uno nuovo."
+    Spec reference: AUTH-05
+
+  /in-attesa  (Pending account screen)
+    - Simple page shown to users with status=pending who try to log in
+    - Message: "Il tuo account è in attesa di approvazione. Riceverai un'email
+      non appena sarà attivato."
+    - Logout button
+    - No event content visible
+
+  /auth/callback  (OAuth callback route handler)
+    - Route handler at src/app/auth/callback/route.ts
+    - Exchange OAuth code for session using Supabase exchangeCodeForSession()
+    - On success: redirect to /calendario
+    - Handle case where Google email matches existing pending account
+
+──────────────────────────────────────
+STEP 7 — Account approval email
+──────────────────────────────────────
+
+  Invoke skill: /react-email   (read before building the template)
+  Invoke skill: /resend        (read before writing the send function)
+
+  Create src/emails/account-approved.tsx:
+    - React Email template
+    - Variables: { firstName, loginUrl }
+    - Subject: "Il tuo account Namo è stato approvato"
+    - Body: Welcome message + login button
+    - Follow visual style from DESIGN_GUIDE.md (colours, fonts, logo if available)
+    - Include plain-text fallback
+
+  Create src/features/notifications/send-account-approved.ts:
+    - Server-only function (use 'server-only' package or assert server context)
+    - Accepts: { toEmail: string, firstName: string }
+    - Sends the account-approved email via Resend
+    - Logs send attempt result (do not throw on failure — log and continue)
+    - Spec reference: AUTH-04, NOT-01
+
+──────────────────────────────────────
+STEP 8 — Admin: volunteer approval flow
+──────────────────────────────────────
+
+  Build the minimum admin interface needed for approving pending volunteers.
+  Full admin UI comes in M6 — this is only what M1 needs to be functional.
+
+  src/app/(app)/admin/utenti/page.tsx
+    - Requires super_admin role (check server-side, redirect if not admin)
+    - Show a "Richieste in attesa" section at the top listing all users with status=pending
+    - Each row shows: Nome, Cognome, Email, Settori di interesse, Data registrazione
+    - "Approva" button → Server Action → sets status=active, sends account-approved email
+    - "Rifiuta" button → Server Action → sets status=deactivated, optional: sends rejection email
+    - Below the pending section: table of all active/suspended users (name, email, role, status)
+      No actions needed on these yet — that's M6.
+    Spec reference: AUTH-04, AUTH-06, journey 6.1 admin step
+
+  Server Actions for this page (in src/features/users/actions.ts):
+    - approveVolunteer(userId: string) → update status, send email, create audit log entry
+    - rejectVolunteer(userId: string)  → update status, create audit log entry
+    Both must:
+      - Verify caller is super_admin (server-side check)
+      - Create audit_log entry (actionType: USER_APPROVED or USER_DEACTIVATED)
+      - Return typed result (success | error)
+
+──────────────────────────────────────
+STEP 9 — App layout and navigation
+──────────────────────────────────────
+
+  Create the persistent authenticated layout at src/app/(app)/layout.tsx:
+
+  Navigation structure (mobile-first):
+    Mobile: bottom tab bar with icons for:
+      - Calendario  (/calendario)
+      - Dashboard   (/dashboard)
+      - Admin       (/admin) — visible only to super_admin
+      - Profilo     (/profilo)  ← placeholder page for now
+
+    Desktop (768px+): left sidebar or top nav with the same items
+
+  The layout must:
+    - Fetch the current user session server-side
+    - Pass user role to determine which nav items are shown
+    - Show user's first name / avatar in the nav
+    - Include a logout button / menu item
+    - Apply the brand colours and typography from DESIGN_GUIDE.md
+
+  Placeholder pages (just route + heading + "In costruzione" message):
+    - src/app/(app)/calendario/page.tsx       → "Calendario"
+    - src/app/(app)/dashboard/page.tsx        → "La mia dashboard"
+    - src/app/(app)/profilo/page.tsx          → "Il mio profilo"
+    - src/app/(app)/admin/eventi/page.tsx     → "Gestione eventi"
+    - src/app/(app)/admin/audit/page.tsx      → "Log audit"
+    - src/app/(app)/admin/export/page.tsx     → "Export dati"
+    - src/app/eventi/page.tsx                 → "Eventi aperti" (public, no auth)
+
+──────────────────────────────────────
+STEP 10 — Smoke tests
+──────────────────────────────────────
+
+  Write unit tests for the business logic functions created in this milestone.
+  Place them in tests/unit/. Use Vitest.
+
+  Required tests:
+
+  tests/unit/users.test.ts
+    - approveVolunteer() sets status=active and creates audit log entry
+    - rejectVolunteer() sets status=deactivated and creates audit log entry
+    - approveVolunteer() fails if caller is not super_admin
+
+  tests/unit/schema.test.ts
+    - Verify all enums have the expected values (smoke test to catch typos)
+
+  Run:
+    pnpm test       — must pass
+    pnpm typecheck  — must pass with zero errors
+    pnpm lint       — must pass with zero errors
+
+────────────────────────────────────────────────────────────────────────────────
+ACCEPTANCE CRITERIA — M1 IS DONE WHEN ALL OF THESE PASS
+────────────────────────────────────────────────────────────────────────────────
+
+  □ `pnpm dev` starts without errors
+  □ `pnpm typecheck` passes — zero TypeScript errors
+  □ `pnpm lint` passes — zero ESLint errors
+  □ `pnpm test` passes — all unit tests green
+
+  Auth flows:
+  □ A new user can submit the /registrati form → account created with status=pending
+  □ A pending user who tries to log in sees the /in-attesa screen (no event content)
+  □ A super_admin can log in with email+password
+  □ Google OAuth login works (redirects correctly, session is established)
+  □ Password reset email is sent when requested
+  □ An expired reset link shows an Italian error, not a crash
+
+  Admin flow:
+  □ Super admin can view the pending approvals list at /admin/utenti
+  □ Super admin can click Approva → user status becomes active → approval email sent
+  □ Approved volunteer can now log in and sees the main layout (not the pending screen)
+  □ Non-admin user accessing /admin/* is redirected (not shown a 403 crash page)
+
+  Database:
+  □ All 8 tables exist in Supabase with correct columns and types
+  □ RLS policies are applied — a volontario cannot query another user's phone number
+  □ audit_log has no UPDATE or DELETE policy
+
+  UI:
+  □ All pages are in Italian (no English UI strings anywhere)
+  □ Main layout renders correctly on a 375px viewport (mobile)
+  □ Main layout renders correctly on a 1280px viewport (desktop)
+  □ All placeholder pages are reachable via navigation
+  □ Design tokens from DESIGN_GUIDE.md are applied (colours, fonts)
+
+  Security:
+  □ SUPABASE_SERVICE_ROLE_KEY does not appear anywhere in client-side code
+  □ No .env values are committed to git
+  □ Server Actions verify the caller's role before performing mutations
+
+────────────────────────────────────────────────────────────────────────────────
+CONSTRAINTS AND GOTCHAS
+────────────────────────────────────────────────────────────────────────────────
+
+  1. NEVER use the old @supabase/auth-helpers-nextjs package.
+     Use @supabase/ssr exclusively (the nextjs-supabase-auth skill covers this).
+
+  2. Use Server Actions for all form submissions and mutations.
+     Do NOT create /api/ routes for actions that have an authenticated user context.
+
+  3. The `users` table in Drizzle is separate from Supabase Auth's auth.users table.
+     When a new user registers via Supabase Auth (or self-registration form), you MUST
+     also create a row in the public.users table (via a Postgres trigger or a
+     server-side insert after auth signup). Use a Postgres trigger for this:
+       CREATE OR REPLACE FUNCTION handle_new_auth_user()
+       RETURNS trigger AS $$
+       BEGIN
+         INSERT INTO public.users (id, email, status, role)
+         VALUES (NEW.id, NEW.email, 'pending', 'volontario');
+         RETURN NEW;
+       END;
+       $$ LANGUAGE plpgsql SECURITY DEFINER;
+       CREATE TRIGGER on_auth_user_created
+         AFTER INSERT ON auth.users
+         FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user();
+     Include this trigger in the Supabase migration SQL.
+
+  4. The volunteer registration form (Step 6 /registrati) collects more fields than
+     Supabase Auth knows about (name, phone, sectors, etc). The flow is:
+       a. Create Supabase Auth user (email+password via signUp())
+       b. The trigger above creates the public.users row with status=pending
+       c. Immediately after, run a server action to update the public.users row
+          with the additional fields (name, phone, sectors, nickname, notes)
+     Do NOT try to store extra fields in Supabase Auth metadata — use public.users.
+
+  5. Google OAuth users also go through the same trigger + status=pending flow.
+     On first OAuth login, the user will be redirected to /in-attesa.
+     A coordinator must approve them before they can access the app.
+     The /auth/callback route handler must handle this redirect correctly.
+
+  6. Do NOT implement any payment, subscription, or billing logic.
+     Do NOT implement the Sector Admin role — it is explicitly out of scope.
+
+  7. All UI strings must be in Italian. If you are unsure of the correct Italian
+     phrasing, write a comment: // TODO: Italian copy needed here
+     Never leave English strings silently in production UI.
+
+  8. Do not add any features, components, or pages beyond what is listed in this
+     prompt. Placeholder pages for future milestones are fine — full implementations
+     are not. Keep scope tight.
+
+  9. When writing the schema, do NOT store waitlist_position as a column in the
+     registrations table. Waitlist position is always computed at query time as:
+       SELECT COUNT(*) FROM registrations
+       WHERE event_id = $1 AND status = 'waitlist' AND registered_at < $2
+     This is documented in CLAUDE.md § 6 and ADR-06 in the spec.
+
+ 10. The audit_log table must have NO update or DELETE RLS policy and no endpoint
+     that allows modification. It is append-only by design. If you accidentally
+     write any update/delete path for audit_log, remove it.
+
+────────────────────────────────────────────────────────────────────────────────
+WHEN M1 IS COMPLETE
+────────────────────────────────────────────────────────────────────────────────
+
+Once all acceptance criteria above are met and tests pass, stop and report back:
+
+  1. List every file created or modified
+  2. Confirm which acceptance criteria passed
+  3. Flag any open questions or deviations from this spec
+  4. Do NOT start M2 without explicit instruction
+
+The prompt for M2 (Event Management) will be provided separately.
+
+================================================================================
+END OF M1 PROMPT
+================================================================================
