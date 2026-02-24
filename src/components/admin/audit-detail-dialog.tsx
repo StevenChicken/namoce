@@ -17,13 +17,13 @@ interface AuditDetailDialogProps {
 function JsonBlock({ label, data }: { label: string; data: unknown }) {
   return (
     <div className="flex flex-col gap-2">
-      <h4 className="text-sm font-medium text-muted-foreground">{label}</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</h4>
       {data ? (
-        <pre className="overflow-auto rounded-lg bg-muted p-4 text-xs leading-relaxed">
+        <pre className="overflow-auto rounded-xl border bg-muted/50 p-4 text-xs leading-relaxed">
           {JSON.stringify(data, null, 2)}
         </pre>
       ) : (
-        <p className="text-sm italic text-muted-foreground">
+        <p className="rounded-xl border border-dashed p-4 text-center text-sm italic text-muted-foreground">
           Nessun dato disponibile
         </p>
       )}
@@ -41,9 +41,9 @@ export function AuditDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Dettagli modifica</DialogTitle>
+          <DialogTitle className="text-namo-charcoal">Dettagli modifica</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <JsonBlock label="Stato precedente" data={beforeState} />
           <JsonBlock label="Stato successivo" data={afterState} />
         </div>

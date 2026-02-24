@@ -89,7 +89,7 @@ export function SeriesEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-namo-charcoal">
             <Layers className="h-5 w-5" />
             Modifica evento della serie
           </DialogTitle>

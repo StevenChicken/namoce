@@ -12,20 +12,22 @@ export default async function AdminExportPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-3xl flex flex-col gap-8">
       <div className="flex items-center gap-3">
-        <Download className="h-7 w-7 text-namo-charcoal" />
-        <h1 className="text-2xl font-bold">Export dati</h1>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-namo-charcoal/5">
+          <Download className="h-5 w-5 text-namo-charcoal" />
+        </div>
+        <h1 className="text-2xl font-bold text-namo-charcoal">Export dati</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Esporta presenze</CardTitle>
+      <Card className="overflow-hidden rounded-xl border shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="text-base">Esporta presenze</CardTitle>
           <CardDescription>
             Esporta le presenze dei volontari nel periodo selezionato
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <AttendanceExportForm />
         </CardContent>
       </Card>

@@ -90,10 +90,10 @@ export function CalendarView({ events, userRegistrations }: CalendarViewProps) {
                   key={sector}
                   onClick={() => toggleSector(sector)}
                   className={cn(
-                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'border-namo-cyan bg-namo-cyan text-white'
-                      : 'border-border bg-white text-namo-charcoal hover:border-namo-cyan/50 hover:bg-namo-cyan/5'
+                      ? 'border-namo-cyan bg-namo-cyan text-white shadow-sm'
+                      : 'border-border bg-card text-namo-charcoal hover:border-namo-cyan/50 hover:bg-namo-cyan/5'
                   )}
                 >
                   {sector}
@@ -114,12 +114,15 @@ export function CalendarView({ events, userRegistrations }: CalendarViewProps) {
 
       {/* Events grouped by month */}
       {monthGroups.length > 0 ? (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {monthGroups.map((group) => (
             <section key={group.key}>
-              <h2 className="mb-4 text-lg font-bold text-namo-charcoal">
-                {group.label}
-              </h2>
+              <div className="mb-5 flex items-center gap-3">
+                <h2 className="text-lg font-bold text-namo-charcoal">
+                  {group.label}
+                </h2>
+                <div className="h-px flex-1 bg-border" />
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {group.events.map((event) => (
                   <EventCard

@@ -97,7 +97,7 @@ export function ConfirmUserActionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Annulla</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending} className="rounded-full">Annulla</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isPending}

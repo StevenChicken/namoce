@@ -30,16 +30,18 @@ export default async function AdminUtentiPage() {
   ])
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-6xl flex flex-col gap-8">
       <div className="flex items-center gap-3">
-        <Users className="h-7 w-7 text-namo-charcoal" />
-        <h1 className="text-2xl font-bold">Gestione utenti</h1>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-namo-charcoal/5">
+          <Users className="h-5 w-5 text-namo-charcoal" />
+        </div>
+        <h1 className="text-2xl font-bold text-namo-charcoal">Gestione utenti</h1>
       </div>
 
       {/* Pending approvals */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="overflow-hidden rounded-xl border shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-base">
             Richieste in attesa
             {pendingUsers.length > 0 && (
               <Badge variant="secondary" className="bg-namo-orange/10 text-namo-orange">
@@ -48,16 +50,19 @@ export default async function AdminUtentiPage() {
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {pendingUsers.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground">
-              Nessuna richiesta in attesa
-            </p>
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <UserCheck className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Nessuna richiesta in attesa
+              </p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/20">
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead className="hidden md:table-cell">Settori</TableHead>
@@ -67,15 +72,15 @@ export default async function AdminUtentiPage() {
                 </TableHeader>
                 <TableBody>
                   {pendingUsers.map((pendingUser) => (
-                    <TableRow key={pendingUser.id}>
+                    <TableRow key={pendingUser.id} className="transition-colors hover:bg-muted/30">
                       <TableCell className="font-medium">
                         {pendingUser.firstName} {pendingUser.lastName}
                       </TableCell>
-                      <TableCell>{pendingUser.email}</TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="text-sm text-muted-foreground">{pendingUser.email}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">
                         {pendingUser.sectorsOfInterest?.join(', ') ?? '—'}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden md:table-cell text-sm">
                         {new Date(pendingUser.createdAt).toLocaleDateString('it-IT')}
                       </TableCell>
                       <TableCell className="text-right">
@@ -90,7 +95,7 @@ export default async function AdminUtentiPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="rounded-full text-namo-red hover:bg-namo-red/10"
+                              className="rounded-full text-namo-red hover:bg-namo-red/10 hover:text-namo-red"
                             >
                               <UserX className="mr-1 h-4 w-4" />
                               Rifiuta
@@ -108,11 +113,11 @@ export default async function AdminUtentiPage() {
       </Card>
 
       {/* All users */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tutti gli utenti</CardTitle>
+      <Card className="overflow-hidden rounded-xl border shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="text-base">Tutti gli utenti</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <AdminUsersView users={allUsers} currentUserId={currentUserId} />
         </CardContent>
       </Card>

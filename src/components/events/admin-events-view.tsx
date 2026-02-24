@@ -232,8 +232,10 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <CalendarDays className="h-7 w-7 text-namo-charcoal" />
-          <h1 className="text-2xl font-bold">Gestione eventi</h1>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-namo-charcoal/5">
+            <CalendarDays className="h-5 w-5 text-namo-charcoal" />
+          </div>
+          <h1 className="text-2xl font-bold text-namo-charcoal">Gestione eventi</h1>
         </div>
         <Button
           onClick={() => setCreateDialogOpen(true)}
@@ -245,12 +247,12 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:items-center">
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
         >
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full bg-card sm:w-[160px]">
             <SelectValue placeholder="Stato" />
           </SelectTrigger>
           <SelectContent>
@@ -266,7 +268,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as TypeFilter)}
         >
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full bg-card sm:w-[160px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -280,7 +282,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
           value={sectorFilter}
           onValueChange={setSectorFilter}
         >
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full bg-card sm:w-[180px]">
             <SelectValue placeholder="Settore" />
           </SelectTrigger>
           <SelectContent>
@@ -318,22 +320,22 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-lg border md:block">
+          <div className="hidden overflow-hidden rounded-xl border shadow-sm md:block">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Titolo</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Luogo</TableHead>
-                  <TableHead className="text-center">Capienza</TableHead>
-                  <TableHead className="text-right">Azioni</TableHead>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="font-semibold">Titolo</TableHead>
+                  <TableHead className="font-semibold">Tipo</TableHead>
+                  <TableHead className="font-semibold">Stato</TableHead>
+                  <TableHead className="font-semibold">Data</TableHead>
+                  <TableHead className="font-semibold">Luogo</TableHead>
+                  <TableHead className="text-center font-semibold">Capienza</TableHead>
+                  <TableHead className="text-right font-semibold">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredEvents.map((event) => (
-                  <TableRow key={event.id}>
+                  <TableRow key={event.id} className="transition-colors hover:bg-muted/30">
                     <TableCell className="max-w-[200px] truncate font-medium">
                       {event.title}
                     </TableCell>
@@ -343,10 +345,10 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
                     <TableCell>
                       <StatusBadge status={event.status} />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {formatDate(event.startAt)}
                     </TableCell>
-                    <TableCell className="max-w-[150px] truncate text-sm">
+                    <TableCell className="max-w-[150px] truncate text-sm text-muted-foreground">
                       {event.location ?? '—'}
                     </TableCell>
                     <TableCell className="text-center text-sm">
@@ -379,11 +381,11 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
             {filteredEvents.map((event) => (
               <div
                 key={event.id}
-                className="rounded-lg border bg-card p-4 shadow-sm"
+                className="rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-natural"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="truncate font-medium">{event.title}</h3>
+                    <h3 className="truncate font-semibold text-namo-charcoal">{event.title}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {formatDate(event.startAt)}
                     </p>
@@ -588,18 +590,30 @@ export function AdminEventsViewSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-48" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <Skeleton className="h-8 w-48" />
+        </div>
         <Skeleton className="h-10 w-36 rounded-full" />
       </div>
-      <div className="flex gap-3">
-        <Skeleton className="h-9 w-40" />
-        <Skeleton className="h-9 w-40" />
-        <Skeleton className="h-9 w-44" />
+      <div className="flex gap-3 rounded-xl border bg-muted/30 p-4">
+        <Skeleton className="h-9 w-40 rounded-md" />
+        <Skeleton className="h-9 w-40 rounded-md" />
+        <Skeleton className="h-9 w-44 rounded-md" />
       </div>
-      <div className="rounded-lg border">
-        <div className="space-y-3 p-4">
+      <div className="overflow-hidden rounded-xl border shadow-sm">
+        <div className="bg-muted/30 p-3">
+          <Skeleton className="h-5 w-full" />
+        </div>
+        <div className="space-y-0 divide-y">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <div key={i} className="flex items-center gap-4 p-4">
+              <Skeleton className="h-5 w-[30%]" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-[20%]" />
+              <Skeleton className="h-5 w-8 ml-auto" />
+            </div>
           ))}
         </div>
       </div>

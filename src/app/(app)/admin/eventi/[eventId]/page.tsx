@@ -20,10 +20,10 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
   const { eventId } = await params
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <Link
         href="/admin/eventi"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-namo-charcoal"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-namo-charcoal"
       >
         <ArrowLeft className="h-4 w-4" />
         Torna agli eventi
@@ -101,16 +101,28 @@ async function AdminEventDetailContent({ eventId }: { eventId: string }) {
 function AdminEventDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-8 w-64" />
-      <div className="flex gap-3">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-6 w-24" />
+      <div className="flex gap-2">
+        <Skeleton className="h-6 w-20 rounded-full" />
+        <Skeleton className="h-6 w-24 rounded-full" />
       </div>
-      <Skeleton className="h-24 w-full rounded-lg" />
-      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-9 w-72" />
+      <div className="flex flex-wrap gap-4">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-5 w-28" />
+      </div>
+      <Skeleton className="h-px w-full" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-px w-full" />
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-10 w-full rounded-lg" />
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full" />
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
       </div>
     </div>

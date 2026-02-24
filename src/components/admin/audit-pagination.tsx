@@ -35,6 +35,7 @@ export function AuditPagination({ currentPage, totalPages }: AuditPaginationProp
         <Button
           variant="outline"
           size="sm"
+          className="rounded-full"
           disabled={currentPage <= 1}
           onClick={() => goToPage(currentPage - 1)}
         >
@@ -44,6 +45,7 @@ export function AuditPagination({ currentPage, totalPages }: AuditPaginationProp
         <Button
           variant="outline"
           size="sm"
+          className="rounded-full"
           disabled={currentPage >= totalPages}
           onClick={() => goToPage(currentPage + 1)}
         >

@@ -322,27 +322,29 @@ export function AdminEventRegistrations({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 rounded-lg border bg-muted/50 p-1">
+      <div className="flex gap-1 rounded-xl border bg-muted/40 p-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               activeTab === tab.key
-                ? 'bg-white text-namo-charcoal shadow-sm'
+                ? 'bg-card text-namo-charcoal shadow-sm'
                 : 'text-muted-foreground hover:text-namo-charcoal'
             }`}
           >
             {tab.label}
-            <span className="ml-1 text-xs opacity-70">({tab.count})</span>
+            <span className="ml-1.5 text-xs opacity-60">({tab.count})</span>
           </button>
         ))}
       </div>
 
       {/* Table */}
       {filteredRows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <Users className="h-10 w-10 text-muted-foreground/50" />
+        <div className="flex flex-col items-center gap-3 py-14 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted/60">
+            <Users className="h-7 w-7 text-muted-foreground/50" />
+          </div>
           <p className="text-sm text-muted-foreground">
             {allRows.length === 0
               ? 'Nessuna iscrizione per questo evento'
@@ -352,22 +354,22 @@ export function AdminEventRegistrations({
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-lg border md:block">
+          <div className="hidden overflow-hidden rounded-xl border shadow-sm md:block">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead>Data iscrizione</TableHead>
-                  {isPastEvent && <TableHead>Presenza</TableHead>}
-                  <TableHead className="text-right">Azioni</TableHead>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="font-semibold">Nome</TableHead>
+                  <TableHead className="font-semibold">Email</TableHead>
+                  <TableHead className="font-semibold">Tipo</TableHead>
+                  <TableHead className="font-semibold">Stato</TableHead>
+                  <TableHead className="font-semibold">Data iscrizione</TableHead>
+                  {isPastEvent && <TableHead className="font-semibold">Presenza</TableHead>}
+                  <TableHead className="text-right font-semibold">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow key={row.id} className="transition-colors hover:bg-muted/30">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1.5">
                         {row.name}
@@ -445,7 +447,7 @@ export function AdminEventRegistrations({
             {filteredRows.map((row) => (
               <div
                 key={row.id}
-                className="rounded-lg border bg-card p-3 shadow-sm"
+                className="rounded-xl border bg-card p-3.5 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">

@@ -106,15 +106,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <h1 className="text-2xl font-bold text-namo-charcoal">La mia dashboard</h1>
+      {/* Welcome header */}
+      <div>
+        <h1 className="text-2xl font-bold text-namo-charcoal">La mia dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tieni traccia dei tuoi eventi e delle tue presenze
+        </p>
+      </div>
 
       {/* Section 1: Prossimi eventi */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-namo-cyan" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-namo-cyan/10">
+            <CalendarDays className="h-4 w-4 text-namo-cyan" />
+          </div>
           <h2 className="text-lg font-semibold text-namo-charcoal">
             Prossimi eventi
           </h2>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {upcoming.length === 0 ? (
@@ -138,7 +147,7 @@ export default async function DashboardPage() {
                   href={`/calendario/${reg.eventId}`}
                   className="group block"
                 >
-                  <Card className="transition-shadow group-hover:shadow-natural">
+                  <Card className="transition-all duration-200 group-hover:shadow-natural group-hover:scale-[1.01]">
                     <CardContent className="p-4 sm:p-5">
                       <div className="flex flex-col gap-2">
                         {/* Sectors + type badge */}
@@ -200,11 +209,14 @@ export default async function DashboardPage() {
 
       {/* Section 2: Riepilogo presenze */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <ClipboardCheck className="h-5 w-5 text-namo-green" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-namo-green/10">
+            <ClipboardCheck className="h-4 w-4 text-namo-green" />
+          </div>
           <h2 className="text-lg font-semibold text-namo-charcoal">
             Riepilogo presenze
           </h2>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {attendance.length === 0 ? (
@@ -227,14 +239,16 @@ export default async function DashboardPage() {
                   <span className="text-sm font-medium text-namo-charcoal">
                     {item.sector}
                   </span>
-                  <span
-                    className={`text-xl font-bold ${SECTOR_COUNT_STYLES[item.sector] ?? 'text-namo-charcoal'}`}
-                  >
-                    {item.presentCount}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      {item.presentCount === 1 ? 'presenza' : 'presenze'}
+                  <div className="text-right">
+                    <span
+                      className={`text-2xl font-bold ${SECTOR_COUNT_STYLES[item.sector] ?? 'text-namo-charcoal'}`}
+                    >
+                      {item.presentCount}
                     </span>
-                  </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      {item.presentCount === 1 ? 'presenza' : 'presenze'}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -244,11 +258,14 @@ export default async function DashboardPage() {
 
       {/* Section 3: Attività recente */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <History className="h-5 w-5 text-namo-orange" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-namo-orange/10">
+            <History className="h-4 w-4 text-namo-orange" />
+          </div>
           <h2 className="text-lg font-semibold text-namo-charcoal">
             Attività recente
           </h2>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {past.length === 0 ? (
@@ -270,7 +287,7 @@ export default async function DashboardPage() {
                     <Link
                       key={reg.id}
                       href={`/calendario/${reg.eventId}`}
-                      className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
+                      className="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-accent/50"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-namo-charcoal">
@@ -297,11 +314,14 @@ export default async function DashboardPage() {
 
       {/* Section 4: Esporta */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Download className="h-5 w-5 text-namo-charcoal" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-namo-charcoal/10">
+            <Download className="h-4 w-4 text-namo-charcoal" />
+          </div>
           <h2 className="text-lg font-semibold text-namo-charcoal">
             Esporta
           </h2>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <Card>

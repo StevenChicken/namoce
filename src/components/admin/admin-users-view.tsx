@@ -120,29 +120,34 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
       </div>
 
       {filteredUsers.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">
-          Nessun utente trovato
-        </p>
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted/60">
+            <Search className="h-6 w-6 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Nessun utente trovato
+          </p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-hidden rounded-xl border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ruolo</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead className="hidden md:table-cell">Settori</TableHead>
+              <TableRow className="bg-muted/20">
+                <TableHead className="font-semibold">Nome</TableHead>
+                <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="font-semibold">Ruolo</TableHead>
+                <TableHead className="font-semibold">Stato</TableHead>
+                <TableHead className="hidden font-semibold md:table-cell">Settori</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.map((u) => (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className="transition-colors hover:bg-muted/30">
                   <TableCell className="font-medium">
                     {u.firstName} {u.lastName}
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
+                  <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                     {u.email}
                   </TableCell>
                   <TableCell>
@@ -158,7 +163,7 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
                   <TableCell>
                     <StatusBadge status={u.status} />
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden text-sm md:table-cell">
                     {u.sectorsOfInterest?.join(', ') ?? '—'}
                   </TableCell>
                   <TableCell>
@@ -177,7 +182,7 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         {filteredUsers.length} utent{filteredUsers.length === 1 ? 'e' : 'i'}
         {statusFilter !== 'all' || search ? ' (filtrati)' : ''}
       </p>

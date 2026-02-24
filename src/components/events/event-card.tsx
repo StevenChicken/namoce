@@ -96,7 +96,7 @@ export function EventCard({
     <Link href={cardHref} className="group block">
       <article
         className={cn(
-          'flex gap-4 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow group-hover:shadow-natural sm:p-5',
+          'flex gap-4 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 group-hover:shadow-natural group-hover:scale-[1.01] sm:p-5',
           isPast && 'opacity-60'
         )}
       >

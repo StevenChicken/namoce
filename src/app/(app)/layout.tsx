@@ -34,12 +34,12 @@ export default async function AppLayout({
   const isAdmin = profile.role === 'super_admin'
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <DesktopSidebar isAdmin={isAdmin} />
 
       <div className="flex flex-1 flex-col">
         {/* Top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-border px-4 md:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-card px-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] md:px-6">
           <div className="flex items-center gap-2 md:hidden">
             <Link href="/calendario">
               <Image

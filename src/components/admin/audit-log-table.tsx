@@ -45,18 +45,18 @@ export function AuditLogTable({ entries }: AuditLogTableProps) {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Data/ora</TableHead>
-              <TableHead>Attore</TableHead>
-              <TableHead>Azione</TableHead>
-              <TableHead className="hidden md:table-cell">Entità</TableHead>
-              <TableHead className="w-10">Dettagli</TableHead>
+            <TableRow className="bg-muted/20">
+              <TableHead className="font-semibold">Data/ora</TableHead>
+              <TableHead className="font-semibold">Attore</TableHead>
+              <TableHead className="font-semibold">Azione</TableHead>
+              <TableHead className="hidden font-semibold md:table-cell">Entità</TableHead>
+              <TableHead className="w-10 font-semibold">Dettagli</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {entries.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell className="whitespace-nowrap text-sm">
+              <TableRow key={entry.id} className="transition-colors hover:bg-muted/30">
+                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                   {new Date(entry.createdAt).toLocaleString('it-IT', {
                     day: '2-digit',
                     month: '2-digit',
@@ -65,22 +65,24 @@ export function AuditLogTable({ entries }: AuditLogTableProps) {
                     minute: '2-digit',
                   })}
                 </TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="text-sm font-medium">
                   {entry.actorFirstName} {entry.actorLastName}
                 </TableCell>
                 <TableCell className="text-sm">
-                  {ACTION_TYPE_LABELS[entry.actionType] ?? entry.actionType}
+                  <span className="inline-flex items-center rounded-md bg-muted/60 px-2 py-0.5 text-xs font-medium">
+                    {ACTION_TYPE_LABELS[entry.actionType] ?? entry.actionType}
+                  </span>
                 </TableCell>
                 <TableCell className="hidden text-sm md:table-cell">
                   <span className="text-muted-foreground">{entry.entityType}</span>
                   {' '}
-                  <span className="font-mono text-xs">{truncateId(entry.entityId)}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{truncateId(entry.entityId)}</span>
                 </TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-namo-cyan hover:text-namo-cyan/80"
                     onClick={() => setDetailEntry(entry)}
                   >
                     <Eye className="h-4 w-4" />

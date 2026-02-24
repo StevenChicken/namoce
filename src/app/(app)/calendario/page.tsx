@@ -32,13 +32,18 @@ export default async function CalendarioPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Page header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-namo-cyan/10">
-          <CalendarDays className="h-5 w-5 text-namo-cyan" />
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-namo-cyan/10">
+            <CalendarDays className="h-5 w-5 text-namo-cyan" />
+          </div>
+          <h1 className="text-2xl font-bold text-namo-charcoal">
+            Calendario eventi
+          </h1>
         </div>
-        <h1 className="text-2xl font-bold text-namo-charcoal">
-          Calendario eventi
-        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Scopri i prossimi eventi e iscriviti
+        </p>
       </div>
 
       <CalendarView events={events} userRegistrations={userRegistrations} />

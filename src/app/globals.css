@@ -12,13 +12,13 @@
 
   /* Namo brand colors */
   --color-namo-charcoal: #32373c;
-  --color-namo-cyan: #0693e3;
+  --color-namo-cyan: #3ECFBF;
   --color-namo-purple: #9b51e0;
   --color-namo-orange: #ff6900;
   --color-namo-red: #cf2e2e;
   --color-namo-green: #00d084;
   --color-namo-pink: #f78da7;
-  --color-namo-muted: #abb8c3;
+  --color-namo-muted: #B5AAA0;
 
   /* Shadows */
   --shadow-natural: 6px 6px 9px rgba(0, 0, 0, 0.2);
@@ -65,25 +65,25 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
-  --foreground: #000000;
+  --background: #FEF0E8;
+  --foreground: #32373c;
   --card: #ffffff;
-  --card-foreground: #000000;
+  --card-foreground: #32373c;
   --popover: #ffffff;
-  --popover-foreground: #000000;
+  --popover-foreground: #32373c;
   --primary: #32373c;
   --primary-foreground: #ffffff;
-  --secondary: #f4f6f8;
+  --secondary: #FFF5EE;
   --secondary-foreground: #32373c;
-  --muted: #f4f6f8;
-  --muted-foreground: #abb8c3;
-  --accent: #0693e3;
+  --muted: #FFF5EE;
+  --muted-foreground: #9B8E82;
+  --accent: #3ECFBF;
   --accent-foreground: #ffffff;
   --destructive: #cf2e2e;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0693e3;
-  --chart-1: #0693e3;
+  --border: #E8DDD4;
+  --input: #E8DDD4;
+  --ring: #3ECFBF;
+  --chart-1: #3ECFBF;
   --chart-2: #00d084;
   --chart-3: #ff6900;
   --chart-4: #9b51e0;
@@ -92,10 +92,10 @@
   --sidebar-foreground: #32373c;
   --sidebar-primary: #32373c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f6f8;
+  --sidebar-accent: #FFF5EE;
   --sidebar-accent-foreground: #32373c;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #0693e3;
+  --sidebar-border: #E8DDD4;
+  --sidebar-ring: #3ECFBF;
 }
 
 @layer base {
@@ -103,6 +103,89 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+
+  /* Brand focus ring — cyan outline for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-namo-cyan;
+  }
+
+  /* Smooth transitions for interactive elements */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply transition-colors duration-150;
+  }
+}
+
+@layer utilities {
+  /* Brand card style — Namo natural shadow */
+  .card-namo {
+    @apply rounded-xl border border-border bg-card p-6;
+    box-shadow: var(--shadow-natural);
+  }
+
+  /* Consistent page header */
+  .page-header {
+    @apply text-2xl font-bold tracking-tight text-namo-charcoal;
+  }
+
+  /* Consistent section header */
+  .section-header {
+    @apply text-lg font-semibold text-namo-charcoal;
+  }
+
+  /* Shimmer animation for loading skeletons */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  .shimmer::after {
+    content: "";
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(62, 207, 191, 0.06) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Polished scrollbar */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #B5AAA0 transparent;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #B5AAA0;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #9B8E82;
 }

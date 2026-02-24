@@ -4,9 +4,11 @@ import { AdminEventsView, AdminEventsViewSkeleton } from '@/components/events/ad
 
 export default function AdminEventiPage() {
   return (
-    <Suspense fallback={<AdminEventsViewSkeleton />}>
-      <AdminEventsContent />
-    </Suspense>
+    <div className="mx-auto w-full max-w-6xl">
+      <Suspense fallback={<AdminEventsViewSkeleton />}>
+        <AdminEventsContent />
+      </Suspense>
+    </div>
   )
 }
 

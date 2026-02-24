@@ -62,16 +62,16 @@ function EventCard({
   const spotsLeft = event.capacity !== null ? event.capacity - event.confirmedCount : null
 
   return (
-    <article className="flex gap-4 rounded-xl border border-border bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+    <article className="flex gap-4 rounded-xl border border-border/60 bg-card p-4 transition-shadow duration-200 hover:shadow-[6px_6px_9px_rgba(0,0,0,0.08)] sm:p-5">
       {/* Date block */}
-      <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-namo-cyan/10 py-3 sm:w-20">
-        <span className="text-xs font-medium uppercase text-namo-cyan">
+      <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-namo-cyan/8 py-3 sm:w-20">
+        <span className="text-[11px] font-semibold uppercase text-namo-cyan">
           {shortDate.weekday}
         </span>
         <span className="text-2xl font-bold text-namo-charcoal sm:text-3xl">
           {shortDate.day}
         </span>
-        <span className="text-xs font-medium uppercase text-namo-cyan">
+        <span className="text-[11px] font-semibold uppercase text-namo-cyan">
           {shortDate.month}
         </span>
       </div>
@@ -99,7 +99,7 @@ function EventCard({
         </h3>
 
         {/* Date & time */}
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-sm text-namo-charcoal/60">
           <Clock className="h-4 w-4 shrink-0" />
           <span className="capitalize">{formatDate(startAt)}</span>
           <span className="mx-0.5">·</span>
@@ -108,7 +108,7 @@ function EventCard({
 
         {/* Location */}
         {event.location && (
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-sm text-namo-charcoal/60">
             <MapPin className="h-4 w-4 shrink-0" />
             <span>{event.location}</span>
           </div>
@@ -123,7 +123,7 @@ function EventCard({
                 Evento al completo
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-sm text-namo-green">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-namo-green">
                 <Users className="h-3.5 w-3.5" />
                 {spotsLeft} {spotsLeft === 1 ? 'posto disponibile' : 'posti disponibili'}
               </span>
@@ -133,7 +133,7 @@ function EventCard({
 
         {/* Notes preview */}
         {event.notes && (
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          <p className="mt-1 line-clamp-2 text-sm text-namo-charcoal/50">
             {event.notes}
           </p>
         )}
@@ -152,7 +152,7 @@ function EventCard({
           ) : (
             <Button
               onClick={() => onRegister(event)}
-              className="rounded-full bg-namo-charcoal hover:bg-namo-charcoal/90"
+              className="rounded-full bg-namo-charcoal font-semibold hover:bg-namo-charcoal/90"
               size="sm"
             >
               Iscriviti
@@ -196,8 +196,8 @@ export function PublicEventsView({ events }: PublicEventsViewProps) {
     <div className="space-y-6">
       {/* Sector filter — only show if there are multiple sectors */}
       {availableSectors.length > 1 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2.5">
+          <p className="text-sm font-semibold text-namo-charcoal/60">
             Filtra per settore
           </p>
           <div className="flex flex-wrap gap-2">
@@ -208,10 +208,10 @@ export function PublicEventsView({ events }: PublicEventsViewProps) {
                   key={sector}
                   onClick={() => toggleSector(sector)}
                   className={cn(
-                    'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                    'rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-150',
                     isActive
-                      ? 'border-namo-cyan bg-namo-cyan text-white'
-                      : 'border-border bg-white text-namo-charcoal hover:border-namo-cyan/50 hover:bg-namo-cyan/5'
+                      ? 'border-namo-cyan bg-namo-cyan text-white shadow-sm'
+                      : 'border-border bg-card text-namo-charcoal hover:border-namo-cyan/40 hover:bg-namo-cyan/5'
                   )}
                 >
                   {sector}
@@ -221,7 +221,7 @@ export function PublicEventsView({ events }: PublicEventsViewProps) {
             {selectedSectors.length > 0 && (
               <button
                 onClick={() => setSelectedSectors([])}
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground underline-offset-2 hover:underline"
+                className="rounded-full px-4 py-1.5 text-sm font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
               >
                 Mostra tutti
               </button>
@@ -245,26 +245,26 @@ export function PublicEventsView({ events }: PublicEventsViewProps) {
         /* Filtered to empty */
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <CalendarDays className="h-12 w-12 text-namo-muted" />
-          <p className="text-lg font-medium text-namo-charcoal">
+          <p className="text-lg font-semibold text-namo-charcoal">
             Nessun evento per i settori selezionati
           </p>
           <button
             onClick={() => setSelectedSectors([])}
-            className="text-sm font-medium text-namo-cyan hover:underline"
+            className="text-sm font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
           >
             Mostra tutti gli eventi
           </button>
         </div>
       ) : (
         /* No events at all */
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-namo-cyan/10">
-            <CalendarDays className="h-8 w-8 text-namo-cyan" />
+        <div className="flex flex-col items-center gap-4 py-20 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-namo-cyan/8">
+            <CalendarDays className="h-10 w-10 text-namo-cyan" />
           </div>
-          <p className="text-lg font-medium text-namo-charcoal">
+          <p className="text-xl font-semibold text-namo-charcoal">
             Nessun evento aperto al momento
           </p>
-          <p className="text-muted-foreground">
+          <p className="text-namo-charcoal/50">
             Torna a trovarci presto!
           </p>
         </div>

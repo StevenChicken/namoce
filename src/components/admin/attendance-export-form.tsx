@@ -19,9 +19,9 @@ export function AttendanceExportForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-muted-foreground">Da</label>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Da</label>
           <Input
             type="date"
             value={startDate}
@@ -29,8 +29,8 @@ export function AttendanceExportForm() {
             className="w-full sm:w-[180px]"
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-muted-foreground">A</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">A</label>
           <Input
             type="date"
             value={endDate}

@@ -52,12 +52,12 @@ function getStatusLabel(status: string): string {
 function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-[#00d084]/10 text-[#00d084] border-[#00d084]/20'
+      return 'bg-namo-green/10 text-namo-green border-namo-green/20'
     case 'pending':
-      return 'bg-[#ff6900]/10 text-[#ff6900] border-[#ff6900]/20'
+      return 'bg-namo-orange/10 text-namo-orange border-namo-orange/20'
     case 'suspended':
     case 'deactivated':
-      return 'bg-[#cf2e2e]/10 text-[#cf2e2e] border-[#cf2e2e]/20'
+      return 'bg-namo-red/10 text-namo-red border-namo-red/20'
     default:
       return ''
   }
@@ -85,17 +85,22 @@ export default async function ProfiloPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <h1 className="text-2xl font-bold text-[#32373c]">Il mio profilo</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-namo-charcoal">Il mio profilo</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Gestisci le tue informazioni e preferenze
+        </p>
+      </div>
 
       {/* User Info Card */}
       <Card>
         <CardContent className="pt-0">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0693e3]/10 text-lg font-semibold text-[#0693e3]">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-namo-cyan/10 text-lg font-semibold text-namo-cyan shadow-sm">
               {getInitials(user.firstName, user.lastName)}
             </div>
             <div className="min-w-0 flex-1 space-y-1">
-              <h2 className="truncate text-lg font-semibold text-[#32373c]">
+              <h2 className="truncate text-lg font-semibold text-namo-charcoal">
                 {fullName || 'Nome non impostato'}
               </h2>
               <div className="flex flex-wrap items-center gap-2">
@@ -137,7 +142,7 @@ export default async function ProfiloPage() {
             <>
               <Separator className="my-4" />
               <div className="space-y-2">
-                <p className="text-sm font-medium text-[#32373c]">
+                <p className="text-sm font-medium text-namo-charcoal">
                   Settori di interesse
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -145,7 +150,7 @@ export default async function ProfiloPage() {
                     <Badge
                       key={sector}
                       variant="outline"
-                      className="border-[#0693e3]/20 bg-[#0693e3]/10 text-[#0693e3]"
+                      className="border-namo-cyan/20 bg-namo-cyan/10 text-namo-cyan"
                     >
                       {sector}
                     </Badge>
@@ -159,7 +164,7 @@ export default async function ProfiloPage() {
             <>
               <Separator className="my-4" />
               <div className="space-y-2">
-                <p className="text-sm font-medium text-[#32373c]">
+                <p className="text-sm font-medium text-namo-charcoal">
                   Settori di interesse
                 </p>
                 <p className="text-muted-foreground text-xs">
@@ -175,7 +180,7 @@ export default async function ProfiloPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-[#0693e3]" />
+            <Bell className="h-5 w-5 text-namo-cyan" />
             <CardTitle>Preferenze notifiche</CardTitle>
           </div>
           <CardDescription>
@@ -188,10 +193,10 @@ export default async function ProfiloPage() {
       </Card>
 
       {/* Account Deletion Card */}
-      <Card className="border-[#cf2e2e]/20">
+      <Card className="border-namo-red/20">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-[#cf2e2e]" />
+            <AlertTriangle className="h-5 w-5 text-namo-red" />
             <CardTitle>Eliminazione account</CardTitle>
           </div>
           <CardDescription>

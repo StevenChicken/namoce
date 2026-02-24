@@ -18,7 +18,7 @@ export function MobileNav({ isAdmin }: MobileNavProps) {
     : mainNavItems
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-card shadow-[0_-2px_8px_rgba(0,0,0,0.06)] md:hidden">
       <div className="flex items-center justify-around">
         {items.map((item) => {
           const Icon = item.icon
@@ -31,13 +31,16 @@ export function MobileNav({ isAdmin }: MobileNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs transition-colors',
+                'relative flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs transition-colors',
                 isActive
                   ? 'text-namo-cyan'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-namo-charcoal/50 hover:text-namo-charcoal'
               )}
             >
-              <Icon className="h-5 w-5" />
+              {isActive && (
+                <span className="absolute top-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-b-full bg-namo-cyan" />
+              )}
+              <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5px]')} />
               <span className="text-[10px] font-medium uppercase tracking-wider">
                 {item.label}
               </span>

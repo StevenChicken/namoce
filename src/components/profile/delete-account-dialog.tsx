@@ -43,7 +43,7 @@ export function DeleteAccountDialog() {
       <AlertDialogTrigger asChild>
         <Button
           variant="outline"
-          className="border-[#cf2e2e]/30 text-[#cf2e2e] hover:bg-[#cf2e2e]/10 hover:text-[#cf2e2e]"
+          className="rounded-full border-namo-red/30 text-namo-red hover:bg-namo-red/10 hover:text-namo-red"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Richiedi eliminazione account
@@ -59,7 +59,7 @@ export function DeleteAccountDialog() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Annulla</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending} className="rounded-full">Annulla</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isPending}

@@ -76,9 +76,9 @@ export function AuditLogFilters({ actors }: AuditLogFiltersProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-muted-foreground">Attore</label>
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Attore</label>
         <Select
           value={currentActor || 'all'}
           onValueChange={(v) => updateParams('actor', v === 'all' ? '' : v)}
@@ -97,8 +97,8 @@ export function AuditLogFilters({ actors }: AuditLogFiltersProps) {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-muted-foreground">Azione</label>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Azione</label>
         <Select
           value={currentAction || 'all'}
           onValueChange={(v) => updateParams('actionType', v === 'all' ? '' : v)}
@@ -117,8 +117,8 @@ export function AuditLogFilters({ actors }: AuditLogFiltersProps) {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-muted-foreground">Da</label>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Da</label>
         <Input
           type="date"
           value={currentStartDate}
@@ -127,8 +127,8 @@ export function AuditLogFilters({ actors }: AuditLogFiltersProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-muted-foreground">A</label>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">A</label>
         <Input
           type="date"
           value={currentEndDate}
@@ -142,7 +142,7 @@ export function AuditLogFilters({ actors }: AuditLogFiltersProps) {
           variant="ghost"
           size="sm"
           onClick={clearFilters}
-          className="self-end text-muted-foreground"
+          className="self-end rounded-full text-muted-foreground hover:text-namo-red"
         >
           <X className="mr-1 h-4 w-4" />
           Cancella filtri

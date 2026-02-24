@@ -104,9 +104,9 @@ export default async function EventDetailPage({
       {/* Back link */}
       <Link
         href="/calendario"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-namo-cyan"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-namo-cyan/30 hover:text-namo-cyan"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         Torna al calendario
       </Link>
 
@@ -145,7 +145,7 @@ export default async function EventDetailPage({
       <h1 className="text-3xl font-bold text-namo-charcoal">{event.title}</h1>
 
       {/* Info card */}
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4 transition-shadow hover:shadow-natural">
         {/* Date */}
         <div className="flex items-start gap-3">
           <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-namo-cyan" />

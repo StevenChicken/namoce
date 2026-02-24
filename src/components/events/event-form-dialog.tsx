@@ -227,8 +227,8 @@ export function EventFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] sm:max-w-[600px] p-0">
-        <DialogHeader className="px-6 pt-6">
-          <DialogTitle>
+        <DialogHeader className="border-b px-6 pb-4 pt-6">
+          <DialogTitle className="text-namo-charcoal">
             {isEdit ? 'Modifica evento' : 'Nuovo evento'}
           </DialogTitle>
         </DialogHeader>

@@ -45,43 +45,50 @@ export default async function AdminAuditPage({
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE))
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-6xl flex flex-col gap-8">
       <div className="flex items-center gap-3">
-        <FileText className="h-7 w-7 text-namo-charcoal" />
-        <h1 className="text-2xl font-bold">Log audit</h1>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-namo-charcoal/5">
+          <FileText className="h-5 w-5 text-namo-charcoal" />
+        </div>
+        <h1 className="text-2xl font-bold text-namo-charcoal">Log audit</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtri</CardTitle>
+      <Card className="overflow-hidden rounded-xl border shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="text-base">Filtri</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Suspense fallback={null}>
             <AuditLogFilters actors={actors} />
           </Suspense>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="overflow-hidden rounded-xl border shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-base">
             Registro attività
             <span className="text-sm font-normal text-muted-foreground">
               ({totalCount} {totalCount === 1 ? 'voce' : 'voci'})
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {entries.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground">
-              Nessuna voce trovata
-            </p>
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <FileText className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Nessuna voce trovata
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-4">
               <AuditLogTable entries={entries} />
-              <Suspense fallback={null}>
-                <AuditPagination currentPage={page} totalPages={totalPages} />
-              </Suspense>
+              <div className="px-6 pb-4">
+                <Suspense fallback={null}>
+                  <AuditPagination currentPage={page} totalPages={totalPages} />
+                </Suspense>
+              </div>
             </div>
           )}
         </CardContent>

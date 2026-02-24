@@ -122,7 +122,7 @@ export function AdminEventDetail({
   return (
     <div className="space-y-6">
       {/* Event header */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <TypeBadge type={event.type} />
           <StatusBadge status={event.status} />
@@ -132,27 +132,27 @@ export function AdminEventDetail({
           {event.title}
         </h1>
 
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
-          <span className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4" />
+        <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-4 text-sm sm:flex-row sm:items-center sm:gap-6">
+          <span className="flex items-center gap-2 text-namo-charcoal">
+            <CalendarDays className="h-4 w-4 text-namo-cyan" />
             <span className="capitalize">{formatDate(event.startAt)}</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
+          <span className="flex items-center gap-2 text-namo-charcoal">
+            <Clock className="h-4 w-4 text-namo-cyan" />
             {formatTime(event.startAt)} – {formatTime(event.endAt)}
           </span>
           {event.location && (
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4" />
+            <span className="flex items-center gap-2 text-namo-charcoal">
+              <MapPin className="h-4 w-4 text-namo-cyan" />
               {event.location}
             </span>
           )}
           {event.capacity !== null && (
-            <span className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
+            <span className="flex items-center gap-2 text-namo-charcoal">
+              <Users className="h-4 w-4 text-namo-cyan" />
               {event.confirmedCount}/{event.capacity} posti
               {event.waitlistCount > 0 && (
-                <span className="text-namo-orange">
+                <span className="font-medium text-namo-orange">
                   (+{event.waitlistCount} in attesa)
                 </span>
               )}
@@ -166,26 +166,26 @@ export function AdminEventDetail({
       {/* Attendance summary (past events only) */}
       {isPastEvent && attendanceSummary && (
         <>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h2 className="text-lg font-bold text-namo-charcoal">
               Presenze
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-lg border bg-namo-green/5 p-3 text-center">
-                <p className="text-2xl font-bold text-namo-green">{attendanceSummary.present}</p>
-                <p className="text-xs text-muted-foreground">Presenti</p>
+              <div className="rounded-xl border bg-namo-green/5 p-4 text-center">
+                <p className="text-3xl font-bold text-namo-green">{attendanceSummary.present}</p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Presenti</p>
               </div>
-              <div className="rounded-lg border bg-namo-red/5 p-3 text-center">
-                <p className="text-2xl font-bold text-namo-red">{attendanceSummary.absent}</p>
-                <p className="text-xs text-muted-foreground">Assenti</p>
+              <div className="rounded-xl border bg-namo-red/5 p-4 text-center">
+                <p className="text-3xl font-bold text-namo-red">{attendanceSummary.absent}</p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Assenti</p>
               </div>
-              <div className="rounded-lg border bg-namo-orange/5 p-3 text-center">
-                <p className="text-2xl font-bold text-namo-orange">{attendanceSummary.noShow}</p>
-                <p className="text-xs text-muted-foreground">No show</p>
+              <div className="rounded-xl border bg-namo-orange/5 p-4 text-center">
+                <p className="text-3xl font-bold text-namo-orange">{attendanceSummary.noShow}</p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">No show</p>
               </div>
-              <div className="rounded-lg border bg-muted/50 p-3 text-center">
-                <p className="text-2xl font-bold text-muted-foreground">{attendanceSummary.unmarked}</p>
-                <p className="text-xs text-muted-foreground">Non segnati</p>
+              <div className="rounded-xl border bg-muted/50 p-4 text-center">
+                <p className="text-3xl font-bold text-muted-foreground">{attendanceSummary.unmarked}</p>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Non segnati</p>
               </div>
             </div>
             {!graceExpired && (

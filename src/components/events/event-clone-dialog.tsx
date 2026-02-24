@@ -80,7 +80,7 @@ export function EventCloneDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-namo-charcoal">
             <Copy className="h-5 w-5" />
             Clona evento
           </DialogTitle>

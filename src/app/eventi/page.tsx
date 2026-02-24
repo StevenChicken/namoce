@@ -23,9 +23,9 @@ export default async function EventiPubbliciPage() {
   }))
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-white">
+      <header className="border-b border-border/60 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href="/eventi" aria-label="Namo APS — Home eventi">
             <Image
@@ -39,25 +39,28 @@ export default async function EventiPubbliciPage() {
           </Link>
           <Link
             href="/accedi"
-            className="rounded-full border border-namo-charcoal px-4 py-1.5 text-sm font-medium text-namo-charcoal transition-colors hover:bg-namo-charcoal hover:text-white"
+            className="rounded-full bg-namo-charcoal px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-namo-charcoal/90"
           >
             Accedi
           </Link>
         </div>
       </header>
 
+      {/* Hero */}
+      <div className="border-b border-border/40 bg-gradient-to-b from-namo-cyan/5 to-background">
+        <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+          <h1 className="text-3xl font-bold text-namo-charcoal sm:text-4xl">
+            Eventi aperti al pubblico
+          </h1>
+          <p className="mt-3 max-w-xl text-base text-namo-charcoal/60 sm:text-lg">
+            Scopri le attivit&agrave; di Namo APS e partecipa ai nostri eventi.
+          </p>
+        </div>
+      </div>
+
       {/* Main content */}
       <main className="flex-1">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-          <div className="mb-8 sm:mb-10">
-            <h1 className="text-2xl font-bold text-namo-charcoal sm:text-3xl">
-              Eventi aperti al pubblico
-            </h1>
-            <p className="mt-2 text-base text-muted-foreground sm:text-lg">
-              Scopri le attivit&agrave; di Namo APS e partecipa ai nostri eventi.
-            </p>
-          </div>
-
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
           <PublicEventsView events={serializedEvents} />
         </div>
       </main>
@@ -65,7 +68,7 @@ export default async function EventiPubbliciPage() {
       {/* Footer */}
       <footer className="bg-namo-charcoal text-white">
         <div className="mx-auto max-w-4xl px-4 py-8 text-center sm:px-6">
-          <p className="text-sm">
+          <p className="text-sm text-white/70">
             &copy; 2026 Namo APS &mdash; Associazione di volontariato
           </p>
         </div>
