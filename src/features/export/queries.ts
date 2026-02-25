@@ -45,7 +45,6 @@ export async function getPersonalExportData(userId: string) {
       email: users.email,
       role: users.role,
       status: users.status,
-      sectorsOfInterest: users.sectorsOfInterest,
       createdAt: users.createdAt,
     })
     .from(users)

@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { CalendarDays } from 'lucide-react'
-import { Sectors } from '@/types/enums'
+import { EventCategories } from '@/types/enums'
+import { CATEGORY_SHORT_LABELS } from '@/lib/category-styles'
 import { cn } from '@/lib/utils'
 import { EventCard, type EventCardEvent, type UserRegistration } from './event-card'
 
@@ -44,51 +45,51 @@ function groupByMonth(
 }
 
 export function CalendarView({ events, userRegistrations }: CalendarViewProps) {
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
-  const availableSectors = useMemo(() => {
-    const sectorSet = new Set<string>()
+  const availableCategories = useMemo(() => {
+    const catSet = new Set<string>()
     events.forEach((event) => {
-      event.sectors?.forEach((s) => sectorSet.add(s))
+      if (event.sectors?.[0]) catSet.add(event.sectors[0])
     })
-    return Sectors.filter((s) => sectorSet.has(s))
+    return EventCategories.filter((c) => catSet.has(c))
   }, [events])
 
   const filteredEvents = useMemo(() => {
-    if (selectedSectors.length === 0) return events
+    if (selectedCategories.length === 0) return events
     return events.filter((event) =>
-      event.sectors?.some((s) => selectedSectors.includes(s))
+      event.sectors?.[0] ? selectedCategories.includes(event.sectors[0]) : false
     )
-  }, [events, selectedSectors])
+  }, [events, selectedCategories])
 
   const monthGroups = useMemo(
     () => groupByMonth(filteredEvents),
     [filteredEvents]
   )
 
-  const toggleSector = (sector: string) => {
-    setSelectedSectors((prev) =>
-      prev.includes(sector)
-        ? prev.filter((s) => s !== sector)
-        : [...prev, sector]
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Sector filter */}
-      {availableSectors.length > 1 && (
+      {/* Category filter */}
+      {availableCategories.length > 1 && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
-            Filtra per settore
+            Filtra per categoria
           </p>
           <div className="flex flex-wrap gap-2">
-            {availableSectors.map((sector) => {
-              const isActive = selectedSectors.includes(sector)
+            {availableCategories.map((category) => {
+              const isActive = selectedCategories.includes(category)
               return (
                 <button
-                  key={sector}
-                  onClick={() => toggleSector(sector)}
+                  key={category}
+                  onClick={() => toggleCategory(category)}
                   className={cn(
                     'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-200',
                     isActive
@@ -96,13 +97,13 @@ export function CalendarView({ events, userRegistrations }: CalendarViewProps) {
                       : 'border-border bg-card text-namo-charcoal hover:border-namo-cyan/50 hover:bg-namo-cyan/5'
                   )}
                 >
-                  {sector}
+                  {CATEGORY_SHORT_LABELS[category] ?? category}
                 </button>
               )
             })}
-            {selectedSectors.length > 0 && (
+            {selectedCategories.length > 0 && (
               <button
-                onClick={() => setSelectedSectors([])}
+                onClick={() => setSelectedCategories([])}
                 className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground underline-offset-2 hover:underline"
               >
                 Mostra tutti
@@ -139,10 +140,10 @@ export function CalendarView({ events, userRegistrations }: CalendarViewProps) {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <CalendarDays className="h-12 w-12 text-namo-muted" />
           <p className="text-lg font-medium text-namo-charcoal">
-            Nessun evento per i settori selezionati
+            Nessun evento per le categorie selezionate
           </p>
           <button
-            onClick={() => setSelectedSectors([])}
+            onClick={() => setSelectedCategories([])}
             className="text-sm font-medium text-namo-cyan hover:underline"
           >
             Mostra tutti gli eventi

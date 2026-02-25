@@ -2,7 +2,8 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import type { Event } from '@/db/schema'
-import { Sectors } from '@/types/enums'
+import { EventCategories } from '@/types/enums'
+import { CATEGORY_SHORT_LABELS } from '@/lib/category-styles'
 import {
   publishEvent,
   cancelEvent,
@@ -126,7 +127,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
   const [events, setEvents] = useState(initialEvents)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
-  const [sectorFilter, setSectorFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -144,11 +145,11 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
     return events.filter((e) => {
       if (statusFilter !== 'all' && e.status !== statusFilter) return false
       if (typeFilter !== 'all' && e.type !== typeFilter) return false
-      if (sectorFilter !== 'all' && !e.sectors?.includes(sectorFilter))
+      if (categoryFilter !== 'all' && e.sectors?.[0] !== categoryFilter)
         return false
       return true
     })
-  }, [events, statusFilter, typeFilter, sectorFilter])
+  }, [events, statusFilter, typeFilter, categoryFilter])
 
   function handleEdit(event: Event) {
     if (event.cloneSeriesId) {
@@ -279,17 +280,17 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
         </Select>
 
         <Select
-          value={sectorFilter}
-          onValueChange={setSectorFilter}
+          value={categoryFilter}
+          onValueChange={setCategoryFilter}
         >
-          <SelectTrigger className="w-full bg-card sm:w-[180px]">
-            <SelectValue placeholder="Settore" />
+          <SelectTrigger className="w-full bg-card sm:w-[200px]">
+            <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tutti i settori</SelectItem>
-            {Sectors.map((sector) => (
-              <SelectItem key={sector} value={sector}>
-                {sector}
+            <SelectItem value="all">Tutte le categorie</SelectItem>
+            {EventCategories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {CATEGORY_SHORT_LABELS[cat] ?? cat}
               </SelectItem>
             ))}
           </SelectContent>

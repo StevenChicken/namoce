@@ -65,7 +65,6 @@ export default async function AdminUtentiPage() {
                   <TableRow className="bg-muted/20">
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead className="hidden md:table-cell">Settori</TableHead>
                     <TableHead className="hidden md:table-cell">Data registrazione</TableHead>
                     <TableHead className="text-right">Azioni</TableHead>
                   </TableRow>
@@ -77,9 +76,6 @@ export default async function AdminUtentiPage() {
                         {pendingUser.firstName} {pendingUser.lastName}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{pendingUser.email}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {pendingUser.sectorsOfInterest?.join(', ') ?? '—'}
-                      </TableCell>
                       <TableCell className="hidden md:table-cell text-sm">
                         {new Date(pendingUser.createdAt).toLocaleDateString('it-IT')}
                       </TableCell>

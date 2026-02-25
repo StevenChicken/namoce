@@ -60,16 +60,16 @@ export async function GET(request: NextRequest) {
 
   const rows = await getAttendanceExportData({ startDate, endDate })
 
-  const header = 'Evento,Data,Settori,Volontario,Email,Stato Presenza'
+  const header = 'Evento,Data,Categoria,Volontario,Email,Stato Presenza'
   const csvRows = rows.map((row) => {
     const name = [row.volunteerFirstName, row.volunteerLastName]
       .filter(Boolean)
       .join(' ')
-    const sectors = (row.eventSectors ?? []).join('; ')
+    const category = row.eventSectors?.[0] ?? ''
     return [
       escapeCSV(row.eventTitle),
       escapeCSV(formatDate(row.eventStartAt)),
-      escapeCSV(sectors),
+      escapeCSV(category),
       escapeCSV(name),
       escapeCSV(row.volunteerEmail),
       escapeCSV(translateAttendance(row.attendanceStatus!)),

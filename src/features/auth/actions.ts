@@ -17,7 +17,6 @@ const registerSchema = z.object({
   lastName: z.string().min(1, 'Il cognome è obbligatorio'),
   nickname: z.string().optional(),
   phone: z.string().optional(),
-  sectorsOfInterest: z.array(z.string()).optional(),
   notes: z.string().optional(),
   privacy: z.literal(true, { message: 'Devi accettare il trattamento dei dati personali' }),
 })
@@ -75,7 +74,6 @@ export async function register(
       lastName: formData.get('lastName'),
       nickname: formData.get('nickname') || undefined,
       phone: formData.get('phone') || undefined,
-      sectorsOfInterest: formData.getAll('sectorsOfInterest') as string[],
       notes: formData.get('notes') || undefined,
       privacy: formData.get('privacy') === 'on',
     }
@@ -87,10 +85,6 @@ export async function register(
 
     const supabase = await createServerClient()
 
-    const sectors = (parsed.data.sectorsOfInterest ?? []).length > 0
-      ? parsed.data.sectorsOfInterest!
-      : null
-
     // Pass profile data as user metadata so the DB trigger can populate public.users
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -101,7 +95,6 @@ export async function register(
           last_name: parsed.data.lastName,
           nickname: parsed.data.nickname || null,
           phone_encrypted: parsed.data.phone || null,
-          sectors_of_interest: sectors,
           notes: parsed.data.notes || null,
         },
       },
@@ -124,7 +117,6 @@ export async function register(
           last_name: parsed.data.lastName,
           nickname: parsed.data.nickname || null,
           phone_encrypted: parsed.data.phone || null,
-          sectors_of_interest: sectors,
           notes: parsed.data.notes || null,
         })
         .eq('id', authData.user.id)

@@ -1,5 +1,5 @@
 import 'server-only'
-import NewEventInSectorEmail from '@/emails/new-event-in-sector'
+import NewEventNotificationEmail from '@/emails/new-event-notification'
 import {
   getResendClient,
   EMAIL_FROM,
@@ -14,17 +14,17 @@ interface Params {
   eventTitle: string
   startAt: Date
   location: string | null
-  sectors: string[]
+  category: string | null
   eventId: string
 }
 
-export async function sendNewEventInSectorEmail({
+export async function sendNewEventNotificationEmail({
   email,
   firstName,
   eventTitle,
   startAt,
   location,
-  sectors,
+  category,
   eventId,
 }: Params) {
   try {
@@ -33,18 +33,18 @@ export async function sendNewEventInSectorEmail({
       from: EMAIL_FROM,
       to: email,
       subject: `Nuovo evento: ${eventTitle}`,
-      react: NewEventInSectorEmail({
+      react: NewEventNotificationEmail({
         firstName,
         eventTitle,
         eventDate: formatEventDate(startAt),
         eventTime: formatEventTime(startAt),
         eventLocation: location || 'Da definire',
-        sectors,
+        category,
         eventUrl: `${appUrl}/calendario/${eventId}`,
         unsubscribeUrl: `${appUrl}/profilo`,
       }),
     })
   } catch (error) {
-    console.error('Errore invio email nuovo evento settore:', error)
+    console.error('Errore invio email nuovo evento:', error)
   }
 }

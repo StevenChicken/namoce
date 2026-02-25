@@ -5,7 +5,7 @@ const eventFormBaseSchema = z.object({
   type: z.enum(['interno', 'aperto'], {
     message: 'Il tipo evento deve essere "interno" o "aperto"',
   }),
-  sectors: z.array(z.string()).optional(),
+  category: z.string().nullable().optional(),
   startAt: z.coerce.date({ message: 'La data di inizio non è valida' }),
   endAt: z.coerce.date({ message: 'La data di fine non è valida' }),
   location: z.string().min(1, 'La posizione è obbligatoria'),

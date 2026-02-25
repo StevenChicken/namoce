@@ -10,7 +10,6 @@ export async function getPendingUsers() {
       email: users.email,
       firstName: users.firstName,
       lastName: users.lastName,
-      sectorsOfInterest: users.sectorsOfInterest,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -27,7 +26,6 @@ export async function getAllUsers() {
       lastName: users.lastName,
       role: users.role,
       status: users.status,
-      sectorsOfInterest: users.sectorsOfInterest,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -62,7 +60,7 @@ export async function getUserById(userId: string) {
 export async function getUserAttendanceSummary(userId: string) {
   const rows = await db
     .select({
-      sector: sql<string>`unnest(${events.sectors})`,
+      category: sql<string>`${events.sectors}[1]`,
       presentCount: sql<number>`count(*)::int`,
     })
     .from(registrations)
@@ -70,11 +68,12 @@ export async function getUserAttendanceSummary(userId: string) {
     .where(
       and(
         eq(registrations.userId, userId),
-        eq(registrations.attendanceStatus, 'present')
+        eq(registrations.attendanceStatus, 'present'),
+        sql`${events.sectors} IS NOT NULL AND array_length(${events.sectors}, 1) > 0`
       )
     )
-    .groupBy(sql`unnest(${events.sectors})`)
-    .orderBy(sql`unnest(${events.sectors})`)
+    .groupBy(sql`${events.sectors}[1]`)
+    .orderBy(sql`${events.sectors}[1]`)
 
   return rows
 }

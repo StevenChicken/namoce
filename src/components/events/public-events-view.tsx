@@ -1,11 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { CalendarDays, MapPin, Users, Clock } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Sectors } from '@/types/enums'
-import { cn } from '@/lib/utils'
 import { ExternalRegistrationDialog } from './external-registration-dialog'
 
 export interface PublicEvent {
@@ -78,21 +75,6 @@ function EventCard({
 
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        {/* Sectors */}
-        {event.sectors && event.sectors.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {event.sectors.map(sector => (
-              <Badge
-                key={sector}
-                variant="secondary"
-                className="text-[11px] font-medium"
-              >
-                {sector}
-              </Badge>
-            ))}
-          </div>
-        )}
-
         {/* Title */}
         <h3 className="text-lg font-bold leading-tight text-namo-charcoal sm:text-xl">
           {event.title}
@@ -102,8 +84,8 @@ function EventCard({
         <div className="flex items-center gap-1.5 text-sm text-namo-charcoal/60">
           <Clock className="h-4 w-4 shrink-0" />
           <span className="capitalize">{formatDate(startAt)}</span>
-          <span className="mx-0.5">·</span>
-          <span>{formatTime(startAt)} – {formatTime(endAt)}</span>
+          <span className="mx-0.5">&middot;</span>
+          <span>{formatTime(startAt)} &ndash; {formatTime(endAt)}</span>
         </div>
 
         {/* Location */}
@@ -165,95 +147,20 @@ function EventCard({
 }
 
 export function PublicEventsView({ events }: PublicEventsViewProps) {
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([])
   const [registeringEvent, setRegisteringEvent] = useState<PublicEvent | null>(null)
-
-  // Determine which sectors are present across all events
-  const availableSectors = useMemo(() => {
-    const sectorSet = new Set<string>()
-    events.forEach(event => {
-      event.sectors?.forEach(s => sectorSet.add(s))
-    })
-    return Sectors.filter(s => sectorSet.has(s))
-  }, [events])
-
-  const filteredEvents = useMemo(() => {
-    if (selectedSectors.length === 0) return events
-    return events.filter(event =>
-      event.sectors?.some(s => selectedSectors.includes(s))
-    )
-  }, [events, selectedSectors])
-
-  const toggleSector = (sector: string) => {
-    setSelectedSectors(prev =>
-      prev.includes(sector)
-        ? prev.filter(s => s !== sector)
-        : [...prev, sector]
-    )
-  }
 
   return (
     <div className="space-y-6">
-      {/* Sector filter — only show if there are multiple sectors */}
-      {availableSectors.length > 1 && (
-        <div className="space-y-2.5">
-          <p className="text-sm font-semibold text-namo-charcoal/60">
-            Filtra per settore
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {availableSectors.map(sector => {
-              const isActive = selectedSectors.includes(sector)
-              return (
-                <button
-                  key={sector}
-                  onClick={() => toggleSector(sector)}
-                  className={cn(
-                    'rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-150',
-                    isActive
-                      ? 'border-namo-cyan bg-namo-cyan text-white shadow-sm'
-                      : 'border-border bg-card text-namo-charcoal hover:border-namo-cyan/40 hover:bg-namo-cyan/5'
-                  )}
-                >
-                  {sector}
-                </button>
-              )
-            })}
-            {selectedSectors.length > 0 && (
-              <button
-                onClick={() => setSelectedSectors([])}
-                className="rounded-full px-4 py-1.5 text-sm font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
-              >
-                Mostra tutti
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Events list */}
-      {filteredEvents.length > 0 ? (
+      {events.length > 0 ? (
         <div className="space-y-4">
-          {filteredEvents.map(event => (
+          {events.map(event => (
             <EventCard
               key={event.id}
               event={event}
               onRegister={setRegisteringEvent}
             />
           ))}
-        </div>
-      ) : events.length > 0 ? (
-        /* Filtered to empty */
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <CalendarDays className="h-12 w-12 text-namo-muted" />
-          <p className="text-lg font-semibold text-namo-charcoal">
-            Nessun evento per i settori selezionati
-          </p>
-          <button
-            onClick={() => setSelectedSectors([])}
-            className="text-sm font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
-          >
-            Mostra tutti gli eventi
-          </button>
         </div>
       ) : (
         /* No events at all */

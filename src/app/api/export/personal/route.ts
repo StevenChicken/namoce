@@ -76,7 +76,6 @@ export async function GET() {
   lines.push(`Email,${escapeCSV(data.user.email)}`)
   lines.push(`Ruolo,${data.user.role === 'super_admin' ? 'Super Admin' : 'Volontario'}`)
   lines.push(`Stato,${data.user.status}`)
-  lines.push(`Settori di interesse,${escapeCSV((data.user.sectorsOfInterest ?? []).join('; '))}`)
   lines.push(`Iscritto dal,${formatDate(data.user.createdAt)}`)
   lines.push('')
 

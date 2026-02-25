@@ -9,13 +9,7 @@ import {
   type RegistrationStatusType,
 } from './registration-status-badge'
 
-const SECTOR_STYLES: Record<string, string> = {
-  'Clown Terapia': 'bg-namo-orange/10 text-namo-orange',
-  'Laboratori Scuole': 'bg-namo-cyan/10 text-namo-cyan',
-  'Compagno Adulto': 'bg-namo-purple/10 text-namo-purple',
-  'Riunioni': 'bg-namo-charcoal/10 text-namo-charcoal',
-  'Eventi Speciali': 'bg-namo-green/10 text-namo-green',
-}
+import { CATEGORY_STYLES, CATEGORY_SHORT_LABELS } from '@/lib/category-styles'
 
 function formatShortDate(date: Date): {
   day: string
@@ -115,20 +109,17 @@ export function EventCard({
 
         {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          {/* Sectors */}
-          {event.sectors && event.sectors.length > 0 && (
+          {/* Category */}
+          {event.sectors?.[0] && (
             <div className="flex flex-wrap gap-1.5">
-              {event.sectors.map((sector) => (
-                <span
-                  key={sector}
-                  className={cn(
-                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium',
-                    SECTOR_STYLES[sector] ?? 'bg-secondary text-secondary-foreground'
-                  )}
-                >
-                  {sector}
-                </span>
-              ))}
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium',
+                  CATEGORY_STYLES[event.sectors[0]] ?? 'bg-secondary text-secondary-foreground'
+                )}
+              >
+                {CATEGORY_SHORT_LABELS[event.sectors[0]] ?? event.sectors[0]}
+              </span>
               {variant === 'default' && event.type === 'aperto' && (
                 <Badge variant="outline" className="text-[11px]">
                   Aperto

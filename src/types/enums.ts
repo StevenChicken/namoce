@@ -76,11 +76,11 @@ export const AuditActionType = {
 } as const
 export type AuditActionType = (typeof AuditActionType)[keyof typeof AuditActionType]
 
-export const Sectors = [
-  'Clown Terapia',
-  'Laboratori Scuole',
-  'Compagno Adulto',
-  'Riunioni',
-  'Eventi Speciali',
+export const EventCategories = [
+  'Servizi in ospedale o altre strutture',
+  'Laboratori di formazione',
+  'Eventi dedicati ai volontari',
+  'Eventi di raccolta fondi',
+  'Altro tipo di evento',
 ] as const
-export type Sector = (typeof Sectors)[number]
+export type EventCategory = (typeof EventCategories)[number]

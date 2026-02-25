@@ -8,8 +8,8 @@ import { requireSuperAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { eventFormSchema, eventSeriesUpdateSchema } from './schemas'
 import { randomUUID } from 'crypto'
-import { getVolunteersByEventSectors, getVolunteersForEvent } from '@/features/notifications/queries'
-import { sendNewEventInSectorEmail } from '@/features/notifications/send-new-event-in-sector'
+import { getVolunteersForNewEventNotification, getVolunteersForEvent } from '@/features/notifications/queries'
+import { sendNewEventNotificationEmail } from '@/features/notifications/send-new-event-notification'
 import { sendEventModifiedEmail } from '@/features/notifications/send-event-modified'
 
 function buildChangesSummary(
@@ -67,7 +67,7 @@ export async function createEvent(data: unknown) {
     .values({
       title: parsed.data.title,
       type: parsed.data.type,
-      sectors: parsed.data.sectors ?? null,
+      sectors: parsed.data.category ? [parsed.data.category] : null,
       startAt: parsed.data.startAt,
       endAt: parsed.data.endAt,
       location: parsed.data.location,
@@ -137,7 +137,7 @@ export async function updateEvent(eventId: string, data: unknown) {
     .set({
       title: parsed.data.title,
       type: parsed.data.type,
-      sectors: parsed.data.sectors ?? null,
+      sectors: parsed.data.category ? [parsed.data.category] : null,
       startAt: parsed.data.startAt,
       endAt: parsed.data.endAt,
       location: parsed.data.location,
@@ -226,22 +226,22 @@ export async function publishEvent(eventId: string) {
     afterState: { status: 'published' },
   })
 
-  // Send new-event-in-sector emails (fire-and-forget)
-  if (currentEvent[0].sectors && currentEvent[0].sectors.length > 0) {
-    getVolunteersByEventSectors(currentEvent[0].sectors).then((volunteers) => {
+  // Send new-event notification emails to all active volunteers (fire-and-forget)
+  if (currentEvent[0].type === 'interno') {
+    getVolunteersForNewEventNotification().then((volunteers) => {
       for (const vol of volunteers) {
-        sendNewEventInSectorEmail({
+        sendNewEventNotificationEmail({
           email: vol.email,
           firstName: vol.firstName || 'Volontario',
           eventTitle: currentEvent[0].title,
           startAt: currentEvent[0].startAt,
           location: currentEvent[0].location,
-          sectors: currentEvent[0].sectors!,
+          category: currentEvent[0].sectors?.[0] ?? null,
           eventId,
         })
       }
     }).catch((error) => {
-      console.error('Errore invio email nuovo evento nel settore:', error)
+      console.error('Errore invio email nuovo evento:', error)
     })
   }
 
@@ -565,7 +565,7 @@ export async function updateSeriesEvents(
   const updateData = {
     title: parsed.data.title,
     type: parsed.data.type,
-    sectors: parsed.data.sectors ?? null,
+    sectors: parsed.data.category ? [parsed.data.category] : null,
     location: parsed.data.location,
     capacity: parsed.data.capacity,
     minVolunteers: parsed.data.minVolunteers ?? null,

@@ -39,11 +39,9 @@ export async function getVolunteersForEvent(eventId: string) {
     )
 }
 
-// ─── getVolunteersByEventSectors ────────────────────────
+// ─── getVolunteersForNewEventNotification ────────────────
 
-export async function getVolunteersByEventSectors(sectors: string[]) {
-  if (sectors.length === 0) return []
-
+export async function getVolunteersForNewEventNotification() {
   return db
     .select({
       email: users.email,
@@ -58,7 +56,6 @@ export async function getVolunteersByEventSectors(sectors: string[]) {
     .where(
       and(
         eq(users.status, 'active'),
-        sql`${users.sectorsOfInterest} && ${sql.raw(`ARRAY[${sectors.map((s) => `'${s.replace(/'/g, "''")}'`).join(',')}]::text[]`)}`,
         sql`COALESCE(${notificationPreferences.informationalEmailsEnabled}, true) = true`
       )
     )

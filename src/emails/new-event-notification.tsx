@@ -13,27 +13,27 @@ import {
 } from '@react-email/components'
 import { emailStyles } from '@/features/notifications/email-helpers'
 
-interface NewEventInSectorEmailProps {
+interface NewEventNotificationEmailProps {
   firstName: string
   eventTitle: string
   eventDate: string
   eventTime: string
   eventLocation: string
-  sectors: string[]
+  category: string | null
   eventUrl: string
   unsubscribeUrl: string
 }
 
-export default function NewEventInSectorEmail({
+export default function NewEventNotificationEmail({
   firstName = 'Volontario',
   eventTitle = 'Evento di esempio',
   eventDate = 'Lunedì 10 marzo 2026',
   eventTime = '14:30',
   eventLocation = 'Sede Namo APS',
-  sectors = ['Clown Terapia'],
+  category = null,
   eventUrl = 'https://namo.vercel.app/calendario/123',
   unsubscribeUrl = 'https://namo.vercel.app/profilo',
-}: NewEventInSectorEmailProps) {
+}: NewEventNotificationEmailProps) {
   return (
     <Html>
       <Head />
@@ -46,8 +46,12 @@ export default function NewEventInSectorEmail({
             È stato pubblicato un nuovo evento che potrebbe interessarti:{' '}
             <strong>{eventTitle}</strong>.
           </Text>
-          <Text style={emailStyles.detailLabel}>Settori</Text>
-          <Text style={emailStyles.detailValue}>{sectors.join(', ')}</Text>
+          {category && (
+            <>
+              <Text style={emailStyles.detailLabel}>Categoria</Text>
+              <Text style={emailStyles.detailValue}>{category}</Text>
+            </>
+          )}
           <Text style={emailStyles.detailLabel}>Data</Text>
           <Text style={emailStyles.detailValue}>{eventDate}</Text>
           <Text style={emailStyles.detailLabel}>Orario</Text>
@@ -61,8 +65,7 @@ export default function NewEventInSectorEmail({
           </Section>
           <Hr style={emailStyles.hr} />
           <Text style={emailStyles.footer}>
-            Ricevi questa email perché hai selezionato questi settori di
-            interesse.{' '}
+            Ricevi questa email perché hai le notifiche informative attive.{' '}
             <Link href={unsubscribeUrl} style={{ color: '#abb8c3' }}>
               Modifica le tue preferenze
             </Link>{' '}

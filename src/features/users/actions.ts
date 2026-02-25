@@ -292,7 +292,6 @@ export async function deleteUserData(userId: string) {
     email: currentUser[0].email,
     nickname: currentUser[0].nickname,
     status: currentUser[0].status,
-    sectorsOfInterest: currentUser[0].sectorsOfInterest,
   }
 
   const anonymizedEmail = `rimosso-${userId.substring(0, 8)}@deleted.namo.app`

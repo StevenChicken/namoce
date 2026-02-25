@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import type { Event } from '@/db/schema'
-import { Sectors } from '@/types/enums'
+import { EventCategories } from '@/types/enums'
 import {
   createEvent,
   updateEvent,
@@ -26,7 +26,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -40,7 +39,7 @@ import { toast } from 'sonner'
 interface FormValues {
   title: string
   type: 'interno' | 'aperto'
-  sectors: string[]
+  category: string
   startDate: string
   startTime: string
   endDate: string
@@ -97,7 +96,7 @@ export function EventFormDialog({
   const emptyValues: FormValues = {
     title: '',
     type: 'interno',
-    sectors: [],
+    category: '',
     startDate: '',
     startTime: '',
     endDate: '',
@@ -116,7 +115,7 @@ export function EventFormDialog({
     return {
       title: e.title,
       type: e.type,
-      sectors: e.sectors ?? [],
+      category: e.sectors?.[0] ?? '',
       startDate: toLocalDateStr(e.startAt),
       startTime: toLocalTimeStr(e.startAt),
       endDate: toLocalDateStr(e.endAt),
@@ -182,7 +181,7 @@ export function EventFormDialog({
     const payload = {
       title: values.title.trim(),
       type: values.type,
-      sectors: values.sectors.length ? values.sectors : undefined,
+      category: values.category || null,
       startAt: new Date(`${values.startDate}T${values.startTime}`),
       endAt: new Date(`${values.endDate}T${values.endTime}`),
       location: values.location.trim(),
@@ -295,48 +294,36 @@ export function EventFormDialog({
                 />
               </div>
 
-              {/* Sectors */}
-              <FormField
-                control={form.control}
-                name="sectors"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Settori</FormLabel>
-                    <div className="flex flex-wrap gap-3">
-                      {Sectors.map((sector) => (
-                        <FormField
-                          key={sector}
-                          control={form.control}
-                          name="sectors"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center gap-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(sector)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value ?? []
-                                    field.onChange(
-                                      checked
-                                        ? [...current, sector]
-                                        : current.filter(
-                                            (s) => s !== sector
-                                          )
-                                    )
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="text-sm font-normal !mt-0">
-                                {sector}
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Category (only for interno events) */}
+              {watchType === 'interno' && (
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleziona categoria (opzionale)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {EventCategories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Start date/time */}
               <div className="grid grid-cols-2 gap-4">

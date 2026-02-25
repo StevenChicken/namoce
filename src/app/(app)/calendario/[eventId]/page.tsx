@@ -34,13 +34,7 @@ export async function generateMetadata({
   return { title: `${event.title} — Namo` }
 }
 
-const SECTOR_STYLES: Record<string, string> = {
-  'Clown Terapia': 'bg-namo-orange/10 text-namo-orange',
-  'Laboratori Scuole': 'bg-namo-cyan/10 text-namo-cyan',
-  'Compagno Adulto': 'bg-namo-purple/10 text-namo-purple',
-  'Riunioni': 'bg-namo-charcoal/10 text-namo-charcoal',
-  'Eventi Speciali': 'bg-namo-green/10 text-namo-green',
-}
+import { CATEGORY_STYLES, CATEGORY_SHORT_LABELS } from '@/lib/category-styles'
 
 function formatFullDate(date: Date): string {
   const formatted = new Intl.DateTimeFormat('it-IT', {
@@ -124,20 +118,17 @@ export default async function EventDetailPage({
         )}
       </div>
 
-      {/* Sectors */}
-      {event.sectors && event.sectors.length > 0 && (
+      {/* Category */}
+      {event.sectors?.[0] && (
         <div className="flex flex-wrap gap-2">
-          {event.sectors.map((sector) => (
-            <span
-              key={sector}
-              className={cn(
-                'inline-flex items-center rounded-full px-3 py-1 text-sm font-medium',
-                SECTOR_STYLES[sector] ?? 'bg-secondary text-secondary-foreground'
-              )}
-            >
-              {sector}
-            </span>
-          ))}
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full px-3 py-1 text-sm font-medium',
+              CATEGORY_STYLES[event.sectors[0]] ?? 'bg-secondary text-secondary-foreground'
+            )}
+          >
+            {CATEGORY_SHORT_LABELS[event.sectors[0]] ?? event.sectors[0]}
+          </span>
         </div>
       )}
 

@@ -19,29 +19,7 @@ import { Button } from '@/components/ui/button'
 
 // ─── Helpers ─────────────────────────────────────────────
 
-const SECTOR_STYLES: Record<string, string> = {
-  'Clown Terapia': 'bg-namo-orange/10 text-namo-orange',
-  'Laboratori Scuole': 'bg-namo-cyan/10 text-namo-cyan',
-  'Compagno Adulto': 'bg-namo-purple/10 text-namo-purple',
-  'Riunioni': 'bg-namo-charcoal/10 text-namo-charcoal',
-  'Eventi Speciali': 'bg-namo-green/10 text-namo-green',
-}
-
-const SECTOR_SUMMARY_STYLES: Record<string, string> = {
-  'Clown Terapia': 'bg-namo-orange/5 border-namo-orange/20',
-  'Laboratori Scuole': 'bg-namo-cyan/5 border-namo-cyan/20',
-  'Compagno Adulto': 'bg-namo-purple/5 border-namo-purple/20',
-  'Riunioni': 'bg-namo-charcoal/5 border-namo-charcoal/20',
-  'Eventi Speciali': 'bg-namo-green/5 border-namo-green/20',
-}
-
-const SECTOR_COUNT_STYLES: Record<string, string> = {
-  'Clown Terapia': 'text-namo-orange',
-  'Laboratori Scuole': 'text-namo-cyan',
-  'Compagno Adulto': 'text-namo-purple',
-  'Riunioni': 'text-namo-charcoal',
-  'Eventi Speciali': 'text-namo-green',
-}
+import { CATEGORY_STYLES, CATEGORY_SUMMARY_STYLES, CATEGORY_COUNT_STYLES, CATEGORY_SHORT_LABELS } from '@/lib/category-styles'
 
 function formatFullDate(date: Date): string {
   return date.toLocaleDateString('it-IT', {
@@ -150,17 +128,16 @@ export default async function DashboardPage() {
                   <Card className="transition-all duration-200 group-hover:shadow-natural group-hover:scale-[1.01]">
                     <CardContent className="p-4 sm:p-5">
                       <div className="flex flex-col gap-2">
-                        {/* Sectors + type badge */}
-                        {((sectors && sectors.length > 0) || reg.eventType === 'aperto') && (
+                        {/* Category */}
+                        {((sectors && sectors[0]) || reg.eventType === 'aperto') && (
                           <div className="flex flex-wrap gap-1.5">
-                            {sectors?.map((sector) => (
+                            {sectors?.[0] && (
                               <span
-                                key={sector}
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${SECTOR_STYLES[sector] ?? 'bg-secondary text-secondary-foreground'}`}
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${CATEGORY_STYLES[sectors[0]] ?? 'bg-secondary text-secondary-foreground'}`}
                               >
-                                {sector}
+                                {CATEGORY_SHORT_LABELS[sectors[0]] ?? sectors[0]}
                               </span>
-                            ))}
+                            )}
                             {reg.eventType === 'aperto' && (
                               <Badge variant="outline" className="text-[11px]">
                                 Aperto
@@ -232,16 +209,16 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {attendance.map((item) => (
               <Card
-                key={item.sector}
-                className={`border ${SECTOR_SUMMARY_STYLES[item.sector] ?? 'bg-secondary/30 border-border'}`}
+                key={item.category}
+                className={`border ${CATEGORY_SUMMARY_STYLES[item.category] ?? 'bg-secondary/30 border-border'}`}
               >
                 <CardContent className="flex items-center justify-between p-4">
                   <span className="text-sm font-medium text-namo-charcoal">
-                    {item.sector}
+                    {CATEGORY_SHORT_LABELS[item.category] ?? item.category}
                   </span>
                   <div className="text-right">
                     <span
-                      className={`text-2xl font-bold ${SECTOR_COUNT_STYLES[item.sector] ?? 'text-namo-charcoal'}`}
+                      className={`text-2xl font-bold ${CATEGORY_COUNT_STYLES[item.category] ?? 'text-namo-charcoal'}`}
                     >
                       {item.presentCount}
                     </span>

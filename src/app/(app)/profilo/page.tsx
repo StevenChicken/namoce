@@ -81,7 +81,6 @@ export default async function ProfiloPage() {
   const informationalEnabled = prefs?.informationalEmailsEnabled ?? true
 
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
-  const sectors = user.sectorsOfInterest ?? []
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
@@ -138,41 +137,6 @@ export default async function ProfiloPage() {
             )}
           </div>
 
-          {sectors.length > 0 && (
-            <>
-              <Separator className="my-4" />
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-namo-charcoal">
-                  Settori di interesse
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {sectors.map((sector) => (
-                    <Badge
-                      key={sector}
-                      variant="outline"
-                      className="border-namo-cyan/20 bg-namo-cyan/10 text-namo-cyan"
-                    >
-                      {sector}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {sectors.length === 0 && (
-            <>
-              <Separator className="my-4" />
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-namo-charcoal">
-                  Settori di interesse
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  Nessun settore selezionato
-                </p>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
 

@@ -28,7 +28,6 @@ interface UserRow {
   lastName: string | null
   role: string
   status: string
-  sectorsOfInterest: string[] | null
   createdAt: Date
 }
 
@@ -137,7 +136,6 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
                 <TableHead className="font-semibold">Email</TableHead>
                 <TableHead className="font-semibold">Ruolo</TableHead>
                 <TableHead className="font-semibold">Stato</TableHead>
-                <TableHead className="hidden font-semibold md:table-cell">Settori</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -162,9 +160,6 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={u.status} />
-                  </TableCell>
-                  <TableCell className="hidden text-sm md:table-cell">
-                    {u.sectorsOfInterest?.join(', ') ?? '—'}
                   </TableCell>
                   <TableCell>
                     <UserActionsDropdown

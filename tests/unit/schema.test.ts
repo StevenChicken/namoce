@@ -9,7 +9,7 @@ import {
   AttendanceStatus,
   ExternalRegistrationStatus,
   AuditActionType,
-  Sectors,
+  EventCategories,
 } from '@/types/enums'
 
 describe('Enums', () => {
@@ -86,12 +86,12 @@ describe('Enums', () => {
     expect(Object.keys(AuditActionType)).toEqual(expectedActions)
   })
 
-  it('Sectors has all expected sectors', () => {
-    expect(Sectors).toContain('Clown Terapia')
-    expect(Sectors).toContain('Laboratori Scuole')
-    expect(Sectors).toContain('Compagno Adulto')
-    expect(Sectors).toContain('Riunioni')
-    expect(Sectors).toContain('Eventi Speciali')
-    expect(Sectors).toHaveLength(5)
+  it('EventCategories has all expected categories', () => {
+    expect(EventCategories).toContain('Servizi in ospedale o altre strutture')
+    expect(EventCategories).toContain('Laboratori di formazione')
+    expect(EventCategories).toContain('Eventi dedicati ai volontari')
+    expect(EventCategories).toContain('Eventi di raccolta fondi')
+    expect(EventCategories).toContain('Altro tipo di evento')
+    expect(EventCategories).toHaveLength(5)
   })
 })
