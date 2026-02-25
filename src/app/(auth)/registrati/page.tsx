@@ -1,13 +1,14 @@
 'use client'
 
-import { useActionState } from 'react'
+import { Suspense } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { register, signInWithGoogle, type AuthActionResult } from '@/features/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle2 } from 'lucide-react'
@@ -35,8 +36,17 @@ function GoogleIcon() {
   )
 }
 
-export default function RegistratiPage() {
+function RegistratiForm() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const redirectEvent = searchParams.get('redirect_event')
   const [state, formAction, isPending] = useActionState<AuthActionResult, FormData>(register, {})
+
+  useEffect(() => {
+    if (state.success && state.redirectTo) {
+      router.push(state.redirectTo)
+    }
+  }, [state.success, state.redirectTo, router])
 
   if (state.success) {
     return (
@@ -48,14 +58,11 @@ export default function RegistratiPage() {
           <CardTitle className="text-2xl font-bold text-namo-charcoal">Registrazione completata</CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="mb-2 text-muted-foreground">
-            Il tuo account è stato creato con successo.
-          </p>
           <p className="mb-8 text-muted-foreground">
-            Un amministratore dovrà approvare la tua registrazione. Riceverai una email quando il tuo account sarà attivato.
+            Il tuo account è stato creato con successo. Puoi ora esplorare gli eventi.
           </p>
-          <Link href="/accedi">
-            <Button className="rounded-full px-8 font-semibold">Torna al login</Button>
+          <Link href={state.redirectTo || '/calendario_eventi'}>
+            <Button className="rounded-full px-8 font-semibold">Esplora gli eventi</Button>
           </Link>
         </CardContent>
       </Card>
@@ -66,7 +73,7 @@ export default function RegistratiPage() {
     <Card className="border-0 shadow-[6px_6px_9px_rgba(0,0,0,0.08)]">
       <CardHeader className="pb-2 text-center">
         <CardTitle className="text-2xl font-bold text-namo-charcoal">Registrati</CardTitle>
-        <CardDescription>Crea il tuo account volontario</CardDescription>
+        <CardDescription>Crea il tuo account</CardDescription>
       </CardHeader>
       <CardContent>
         {state.error && (
@@ -75,7 +82,7 @@ export default function RegistratiPage() {
           </Alert>
         )}
 
-        <form action={signInWithGoogle}>
+        <form action={() => signInWithGoogle(redirectEvent ?? undefined)}>
           <Button
             type="submit"
             variant="outline"
@@ -98,6 +105,10 @@ export default function RegistratiPage() {
         </div>
 
         <form action={formAction} className="flex flex-col gap-4">
+          {redirectEvent && (
+            <input type="hidden" name="redirectEvent" value={redirectEvent} />
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="firstName">Nome *</Label>
@@ -141,16 +152,6 @@ export default function RegistratiPage() {
             <Input id="phone" name="phone" type="tel" className="h-11" />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="nickname">Nickname</Label>
-            <Input id="nickname" name="nickname" className="h-11" />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="notes">Note</Label>
-            <Textarea id="notes" name="notes" placeholder="Informazioni aggiuntive (opzionale)" />
-          </div>
-
           <div className="flex items-start gap-2.5 rounded-lg border border-border p-3">
             <Checkbox id="privacy" name="privacy" required className="mt-0.5" />
             <Label htmlFor="privacy" className="text-sm leading-snug">
@@ -165,11 +166,22 @@ export default function RegistratiPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Hai già un account?{' '}
-          <Link href="/accedi" className="font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline">
+          <Link
+            href={redirectEvent ? `/accedi?redirect_event=${redirectEvent}` : '/accedi'}
+            className="font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
+          >
             Accedi
           </Link>
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+export default function RegistratiPage() {
+  return (
+    <Suspense>
+      <RegistratiForm />
+    </Suspense>
   )
 }

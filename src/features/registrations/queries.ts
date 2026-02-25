@@ -76,6 +76,7 @@ export async function getRegistrationsByEventId(eventId: string) {
 }
 
 // ─── getExternalRegistrationsByEventId ───────────────────
+// @deprecated — external registration system removed. Kept for legacy data.
 
 export async function getExternalRegistrationsByEventId(eventId: string) {
   return db
@@ -244,6 +245,7 @@ export async function getUserRegistrations(userId: string) {
 }
 
 // ─── getExternalRegistrationByCancelToken ────────────────
+// @deprecated — external registration system removed. Kept for legacy cancel tokens.
 
 export async function getExternalRegistrationByCancelToken(
   cancelToken: string

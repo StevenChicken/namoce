@@ -22,12 +22,55 @@ export async function requireSuperAdmin() {
   const userId = await requireAuthenticated()
 
   const result = await db
-    .select({ role: users.role })
+    .select({ adminLevel: users.adminLevel })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
 
-  if (!result[0] || result[0].role !== 'super_admin') {
+  if (!result[0] || result[0].adminLevel !== 'super_admin') {
+    throw new Error('Non autorizzato')
+  }
+
+  return userId
+}
+
+export async function requireAdmin() {
+  const userId = await requireAuthenticated()
+
+  const result = await db
+    .select({ adminLevel: users.adminLevel })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (
+    !result[0] ||
+    (result[0].adminLevel !== 'admin' && result[0].adminLevel !== 'super_admin')
+  ) {
+    throw new Error('Non autorizzato')
+  }
+
+  return userId
+}
+
+export async function requireVolunteerOrAdmin() {
+  const userId = await requireAuthenticated()
+
+  const result = await db
+    .select({ userType: users.userType, adminLevel: users.adminLevel })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (!result[0]) {
+    throw new Error('Non autorizzato')
+  }
+
+  const { userType, adminLevel } = result[0]
+  const isVolunteer = userType === 'volontario'
+  const isAdmin = adminLevel === 'admin' || adminLevel === 'super_admin'
+
+  if (!isVolunteer && !isAdmin) {
     throw new Error('Non autorizzato')
   }
 

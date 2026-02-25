@@ -23,25 +23,27 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from('users')
-    .select('first_name, last_name, email, role, status')
+    .select('first_name, last_name, email, user_type, admin_level, status')
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.status === 'pending') {
-    redirect('/in-attesa')
+  if (!profile) {
+    redirect('/accedi')
   }
 
-  const isAdmin = profile.role === 'super_admin'
+  const isVolunteer = profile.user_type === 'volontario'
+  const isAdmin = profile.admin_level === 'admin' || profile.admin_level === 'super_admin'
+  const isSuperAdmin = profile.admin_level === 'super_admin'
 
   return (
     <div className="flex min-h-screen bg-background">
-      <DesktopSidebar isAdmin={isAdmin} />
+      <DesktopSidebar isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} isVolunteer={isVolunteer} />
 
       <div className="flex flex-1 flex-col">
         {/* Top bar */}
         <header className="flex h-16 items-center justify-between border-b border-border/60 bg-card px-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] md:px-6">
           <div className="flex items-center gap-2 md:hidden">
-            <Link href="/calendario">
+            <Link href="/calendario_eventi">
               <Image
                 src="/logo.png"
                 alt="Namo APS"
@@ -65,7 +67,7 @@ export default async function AppLayout({
         </main>
       </div>
 
-      <MobileNav isAdmin={isAdmin} />
+      <MobileNav isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} isVolunteer={isVolunteer} />
     </div>
   )
 }

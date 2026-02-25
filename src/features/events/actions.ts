@@ -1,10 +1,10 @@
 'use server'
 
 import { db } from '@/db'
-import { events, registrations, externalRegistrations } from '@/db/schema'
+import { events, registrations, externalRegistrations, users, adminCategoryPermissions } from '@/db/schema'
 import { eq, and, sql, gte, inArray, isNotNull } from 'drizzle-orm'
 import { createAuditEntry } from '@/lib/audit'
-import { requireSuperAdmin } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { eventFormSchema, eventSeriesUpdateSchema } from './schemas'
 import { randomUUID } from 'crypto'
@@ -27,8 +27,8 @@ function buildChangesSummary(
 
 function revalidateEventPaths() {
   revalidatePath('/admin/eventi')
-  revalidatePath('/calendario')
-  revalidatePath('/eventi')
+  revalidatePath('/calendario_del_volontario')
+  revalidatePath('/calendario_eventi')
 }
 
 function shiftEventDates(
@@ -52,15 +52,48 @@ function shiftEventDates(
   }
 }
 
+// ─── Category authorization helper ──────────────────────
+
+async function checkCategoryAuthorization(actorId: string, category: string | null) {
+  if (!category) return
+
+  const actor = await db
+    .select({ adminLevel: users.adminLevel })
+    .from(users)
+    .where(eq(users.id, actorId))
+    .limit(1)
+
+  // Super admins can manage all categories
+  if (actor[0]?.adminLevel === 'super_admin') return
+
+  // Regular admins need category permission
+  const permission = await db
+    .select({ id: adminCategoryPermissions.id })
+    .from(adminCategoryPermissions)
+    .where(
+      and(
+        eq(adminCategoryPermissions.userId, actorId),
+        eq(adminCategoryPermissions.category, category)
+      )
+    )
+    .limit(1)
+
+  if (!permission[0]) {
+    throw new Error('Non hai i permessi per gestire eventi di questa categoria')
+  }
+}
+
 // ─── createEvent ───────────────────────────────────────
 
 export async function createEvent(data: unknown) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const parsed = eventFormSchema.safeParse(data)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
+
+  await checkCategoryAuthorization(actorId, parsed.data.category ?? null)
 
   const [newEvent] = await db
     .insert(events)
@@ -105,7 +138,7 @@ export async function createEvent(data: unknown) {
 // ─── updateEvent ───────────────────────────────────────
 
 export async function updateEvent(eventId: string, data: unknown) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const parsed = eventFormSchema.safeParse(data)
   if (!parsed.success) {
@@ -121,6 +154,10 @@ export async function updateEvent(eventId: string, data: unknown) {
   if (!currentEvent[0]) {
     throw new Error('Evento non trovato')
   }
+
+  // Check authorization for both current and new category
+  await checkCategoryAuthorization(actorId, currentEvent[0].sectors?.[0] ?? null)
+  await checkCategoryAuthorization(actorId, parsed.data.category ?? null)
 
   const beforeState = {
     title: currentEvent[0].title,
@@ -196,7 +233,7 @@ export async function updateEvent(eventId: string, data: unknown) {
 // ─── publishEvent ──────────────────────────────────────
 
 export async function publishEvent(eventId: string) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const currentEvent = await db
     .select()
@@ -211,6 +248,8 @@ export async function publishEvent(eventId: string) {
   if (currentEvent[0].status !== 'draft') {
     throw new Error('Solo gli eventi in bozza possono essere pubblicati')
   }
+
+  await checkCategoryAuthorization(actorId, currentEvent[0].sectors?.[0] ?? null)
 
   await db
     .update(events)
@@ -251,7 +290,7 @@ export async function publishEvent(eventId: string) {
 // ─── cancelEvent ───────────────────────────────────────
 
 export async function cancelEvent(eventId: string) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const currentEvent = await db
     .select()
@@ -266,6 +305,8 @@ export async function cancelEvent(eventId: string) {
   if (currentEvent[0].status === 'cancelled') {
     throw new Error("L'evento è già stato annullato")
   }
+
+  await checkCategoryAuthorization(actorId, currentEvent[0].sectors?.[0] ?? null)
 
   await db
     .update(events)
@@ -287,7 +328,7 @@ export async function cancelEvent(eventId: string) {
 // ─── deleteEvent ───────────────────────────────────────
 
 export async function deleteEvent(eventId: string) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const currentEvent = await db
     .select()
@@ -306,6 +347,8 @@ export async function deleteEvent(eventId: string) {
   if (currentEvent[0].endAt > new Date()) {
     throw new Error("Solo gli eventi passati possono essere eliminati")
   }
+
+  await checkCategoryAuthorization(actorId, currentEvent[0].sectors?.[0] ?? null)
 
   // Check for registrations with attendance data
   const [regsWithAttendance] = await db
@@ -357,7 +400,7 @@ export async function cloneEvent(
   sourceEventId: string,
   targetDate: string
 ) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   const sourceEvent = await db
     .select()
@@ -368,6 +411,8 @@ export async function cloneEvent(
   if (!sourceEvent[0]) {
     throw new Error('Evento sorgente non trovato')
   }
+
+  await checkCategoryAuthorization(actorId, sourceEvent[0].sectors?.[0] ?? null)
 
   const source = sourceEvent[0]
   const { startAt, endAt } = shiftEventDates(source.startAt, source.endAt, targetDate)
@@ -431,7 +476,7 @@ export async function bulkCloneEvents(
   sourceEventId: string,
   targetDates: string[]
 ) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   if (targetDates.length === 0) {
     throw new Error('Seleziona almeno una data di destinazione')
@@ -446,6 +491,8 @@ export async function bulkCloneEvents(
   if (!sourceEvent[0]) {
     throw new Error('Evento sorgente non trovato')
   }
+
+  await checkCategoryAuthorization(actorId, sourceEvent[0].sectors?.[0] ?? null)
 
   const source = sourceEvent[0]
   let seriesId = source.cloneSeriesId
@@ -523,7 +570,7 @@ export async function updateSeriesEvents(
   scope: 'single' | 'future' | 'all',
   data: unknown
 ) {
-  const actorId = await requireSuperAdmin()
+  const actorId = await requireAdmin()
 
   if (scope === 'single') {
     return updateEvent(eventId, data)
@@ -547,6 +594,9 @@ export async function updateSeriesEvents(
   if (!currentEvent[0].cloneSeriesId) {
     throw new Error('Questo evento non fa parte di una serie')
   }
+
+  await checkCategoryAuthorization(actorId, currentEvent[0].sectors?.[0] ?? null)
+  await checkCategoryAuthorization(actorId, parsed.data.category ?? null)
 
   const conditions = [eq(events.cloneSeriesId, currentEvent[0].cloneSeriesId)]
   if (scope === 'future') {

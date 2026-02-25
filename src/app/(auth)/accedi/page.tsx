@@ -37,6 +37,7 @@ function GoogleIcon() {
 function AccediForm() {
   const searchParams = useSearchParams()
   const suspendedError = searchParams.get('error') === 'account_suspended'
+  const redirectEvent = searchParams.get('redirect_event')
   const [state, formAction, isPending] = useActionState<AuthActionResult, FormData>(login, {})
 
   return (
@@ -61,6 +62,10 @@ function AccediForm() {
         )}
 
         <form action={formAction} className="flex flex-col gap-4">
+          {redirectEvent && (
+            <input type="hidden" name="redirectEvent" value={redirectEvent} />
+          )}
+
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -110,7 +115,7 @@ function AccediForm() {
           </div>
         </div>
 
-        <form action={signInWithGoogle}>
+        <form action={() => signInWithGoogle(redirectEvent ?? undefined)}>
           <Button
             type="submit"
             variant="outline"
@@ -123,7 +128,10 @@ function AccediForm() {
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Non hai un account?{' '}
-          <Link href="/registrati" className="font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline">
+          <Link
+            href={redirectEvent ? `/registrati?redirect_event=${redirectEvent}` : '/registrati'}
+            className="font-medium text-namo-cyan transition-colors hover:text-namo-cyan/80 hover:underline"
+          >
             Registrati
           </Link>
         </p>

@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { sendWelcome } from '@/features/notifications/send-welcome'
 
 const loginSchema = z.object({
   email: z.string().email('Inserisci un indirizzo email valido'),
@@ -15,10 +16,9 @@ const registerSchema = z.object({
   password: z.string().min(6, 'La password deve avere almeno 6 caratteri'),
   firstName: z.string().min(1, 'Il nome è obbligatorio'),
   lastName: z.string().min(1, 'Il cognome è obbligatorio'),
-  nickname: z.string().optional(),
   phone: z.string().optional(),
-  notes: z.string().optional(),
   privacy: z.literal(true, { message: 'Devi accettare il trattamento dei dati personali' }),
+  redirectEvent: z.string().uuid().optional(),
 })
 
 const resetPasswordSchema = z.object({
@@ -32,6 +32,7 @@ const updatePasswordSchema = z.object({
 export type AuthActionResult = {
   error?: string
   success?: boolean
+  redirectTo?: string
 }
 
 export async function login(
@@ -59,7 +60,13 @@ export async function login(
     return { error: 'Email o password non validi' }
   }
 
-  redirect('/calendario')
+  // Check for redirect_event from the form
+  const redirectEvent = formData.get('redirectEvent') as string | null
+  if (redirectEvent) {
+    redirect(`/calendario_eventi?register=${redirectEvent}`)
+  }
+
+  redirect('/calendario_eventi')
 }
 
 export async function register(
@@ -72,10 +79,9 @@ export async function register(
       password: formData.get('password'),
       firstName: formData.get('firstName'),
       lastName: formData.get('lastName'),
-      nickname: formData.get('nickname') || undefined,
       phone: formData.get('phone') || undefined,
-      notes: formData.get('notes') || undefined,
       privacy: formData.get('privacy') === 'on',
+      redirectEvent: (formData.get('redirectEvent') as string) || undefined,
     }
 
     const parsed = registerSchema.safeParse(raw)
@@ -93,9 +99,7 @@ export async function register(
         data: {
           first_name: parsed.data.firstName,
           last_name: parsed.data.lastName,
-          nickname: parsed.data.nickname || null,
           phone_encrypted: parsed.data.phone || null,
-          notes: parsed.data.notes || null,
         },
       },
     })
@@ -115,18 +119,27 @@ export async function register(
         .update({
           first_name: parsed.data.firstName,
           last_name: parsed.data.lastName,
-          nickname: parsed.data.nickname || null,
           phone_encrypted: parsed.data.phone || null,
-          notes: parsed.data.notes || null,
         })
         .eq('id', authData.user.id)
 
       if (updateError) {
         console.error('Failed to update user profile:', updateError)
       }
+
+      // Send welcome email (fire-and-forget)
+      sendWelcome({
+        email: parsed.data.email,
+        firstName: parsed.data.firstName,
+      }).catch((err: unknown) => console.error('Errore invio email benvenuto:', err))
     }
 
-    return { success: true }
+    // Build redirect URL
+    const redirectTo = parsed.data.redirectEvent
+      ? `/calendario_eventi?register=${parsed.data.redirectEvent}`
+      : '/calendario_eventi'
+
+    return { success: true, redirectTo }
   } catch (error) {
     console.error('Registration error:', error)
     return { error: 'Errore durante la registrazione. Riprova più tardi.' }
@@ -176,13 +189,21 @@ export async function updatePassword(
   return { success: true }
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(redirectEvent?: string): Promise<void> {
   const supabase = await createServerClient()
+
+  const callbackUrl = new URL(
+    '/auth/callback',
+    process.env.NEXT_PUBLIC_APP_URL
+  )
+  if (redirectEvent) {
+    callbackUrl.searchParams.set('redirect_event', redirectEvent)
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: callbackUrl.toString(),
     },
   })
 
@@ -196,5 +217,5 @@ export async function signInWithGoogle(): Promise<void> {
 export async function signOut() {
   const supabase = await createServerClient()
   await supabase.auth.signOut()
-  redirect('/accedi')
+  redirect('/calendario_eventi')
 }

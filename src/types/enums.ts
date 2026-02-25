@@ -4,6 +4,19 @@ export const UserRole = {
 } as const
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
+export const UserType = {
+  UTENTE: 'utente',
+  VOLONTARIO: 'volontario',
+} as const
+export type UserType = (typeof UserType)[keyof typeof UserType]
+
+export const AdminLevel = {
+  NONE: 'none',
+  ADMIN: 'admin',
+  SUPER_ADMIN: 'super_admin',
+} as const
+export type AdminLevel = (typeof AdminLevel)[keyof typeof AdminLevel]
+
 export const UserStatus = {
   PENDING: 'pending',
   ACTIVE: 'active',
@@ -52,6 +65,14 @@ export const ExternalRegistrationStatus = {
 } as const
 export type ExternalRegistrationStatus = (typeof ExternalRegistrationStatus)[keyof typeof ExternalRegistrationStatus]
 
+export const PaymentStatus = {
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  REFUNDED: 'refunded',
+} as const
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
+
 export const AuditActionType = {
   EVENT_CREATED: 'EVENT_CREATED',
   EVENT_UPDATED: 'EVENT_UPDATED',
@@ -73,6 +94,15 @@ export const AuditActionType = {
   ACCOUNT_DELETION_REQUESTED: 'ACCOUNT_DELETION_REQUESTED',
   WAITLIST_ORDER_OVERRIDE: 'WAITLIST_ORDER_OVERRIDE',
   ROLE_CHANGED: 'ROLE_CHANGED',
+  USER_TYPE_CHANGED: 'USER_TYPE_CHANGED',
+  ADMIN_LEVEL_CHANGED: 'ADMIN_LEVEL_CHANGED',
+  CLOWN_NAME_UPDATED: 'CLOWN_NAME_UPDATED',
+  CATEGORY_PERMISSION_ASSIGNED: 'CATEGORY_PERMISSION_ASSIGNED',
+  CATEGORY_PERMISSION_REMOVED: 'CATEGORY_PERMISSION_REMOVED',
+  MANUAL_PAYMENT_RECORDED: 'MANUAL_PAYMENT_RECORDED',
+  MEMBERSHIP_SETTINGS_UPDATED: 'MEMBERSHIP_SETTINGS_UPDATED',
+  PAYMENT_REFUNDED: 'PAYMENT_REFUNDED',
+  DONATION_RECEIVED: 'DONATION_RECEIVED',
 } as const
 export type AuditActionType = (typeof AuditActionType)[keyof typeof AuditActionType]
 

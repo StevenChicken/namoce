@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { getEventById } from '@/features/events/queries'
 import {
   getRegistrationsByEventId,
-  getExternalRegistrationsByEventId,
 } from '@/features/registrations/queries'
 import { getActiveVolunteers } from '@/features/users/queries'
 import { getEventAttendanceSummary } from '@/features/attendance/queries'
@@ -37,10 +36,9 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
 }
 
 async function AdminEventDetailContent({ eventId }: { eventId: string }) {
-  const [event, internalRegs, externalRegs, volunteers, attendanceSummary] = await Promise.all([
+  const [event, internalRegs, volunteers, attendanceSummary] = await Promise.all([
     getEventById(eventId),
     getRegistrationsByEventId(eventId),
-    getExternalRegistrationsByEventId(eventId),
     getActiveVolunteers(),
     getEventAttendanceSummary(eventId),
   ])
@@ -49,27 +47,14 @@ async function AdminEventDetailContent({ eventId }: { eventId: string }) {
     notFound()
   }
 
-  // Serialize dates for client components
   const serializedInternalRegs = internalRegs.map((r) => ({
     ...r,
     registeredAt: r.registeredAt.toISOString(),
     cancelledAt: r.cancelledAt?.toISOString() ?? null,
   }))
 
-  const serializedExternalRegs = externalRegs.map((r) => ({
-    id: r.id,
-    eventId: r.eventId,
-    firstName: r.firstName,
-    lastName: r.lastName,
-    email: r.email,
-    status: r.status,
-    registeredAt: r.registeredAt.toISOString(),
-    cancelledAt: r.cancelledAt?.toISOString() ?? null,
-  }))
-
   const totalConfirmed =
-    internalRegs.filter((r) => r.status === 'confirmed').length +
-    externalRegs.filter((r) => r.status === 'confirmed').length
+    internalRegs.filter((r) => r.status === 'confirmed').length
 
   const isFull = event.capacity !== null && totalConfirmed >= event.capacity
 
@@ -90,7 +75,7 @@ async function AdminEventDetailContent({ eventId }: { eventId: string }) {
         attendanceGracePeriodHours: event.attendanceGracePeriodHours,
       }}
       internalRegistrations={serializedInternalRegs}
-      externalRegistrations={serializedExternalRegs}
+      externalRegistrations={[]}
       volunteers={volunteers}
       isFull={isFull}
       attendanceSummary={attendanceSummary}

@@ -1,6 +1,7 @@
 import { requireAuthenticated } from '@/lib/auth'
 import { getUpcomingUserRegistrations, getPastUserRegistrations } from '@/features/registrations/queries'
 import { getUserAttendanceSummary } from '@/features/users/queries'
+import { getUserMembershipPayment, getMembershipSettings } from '@/features/payments/queries'
 import Link from 'next/link'
 import {
   CalendarDays,
@@ -9,6 +10,7 @@ import {
   Download,
   Clock,
   MapPin,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   Card,
@@ -76,11 +78,25 @@ function getAttendanceStyle(status: string | null): string {
 export default async function DashboardPage() {
   const userId = await requireAuthenticated()
 
-  const [upcoming, past, attendance] = await Promise.all([
+  const currentYear = new Date().getFullYear()
+  const [upcoming, past, attendance, membershipPayment, membershipSettings] = await Promise.all([
     getUpcomingUserRegistrations(userId),
     getPastUserRegistrations(userId, 10),
     getUserAttendanceSummary(userId),
+    getUserMembershipPayment(userId, currentYear),
+    getMembershipSettings(),
   ])
+
+  const isPastDeadline = (() => {
+    const now = new Date()
+    const deadline = new Date(
+      currentYear,
+      membershipSettings.deadlineMonth - 1,
+      membershipSettings.deadlineDay
+    )
+    return now > deadline
+  })()
+  const showMembershipBanner = !membershipPayment && isPastDeadline
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -91,6 +107,32 @@ export default async function DashboardPage() {
           Tieni traccia dei tuoi eventi e delle tue presenze
         </p>
       </div>
+
+      {/* Membership Banner */}
+      {showMembershipBanner && (
+        <Card className="border-namo-orange/30 bg-namo-orange/5">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-namo-orange/10">
+              <AlertTriangle className="h-5 w-5 text-namo-orange" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-namo-charcoal">
+                Quota associativa {currentYear} non pagata
+              </p>
+              <p className="text-sm text-muted-foreground">
+                La scadenza è passata. Effettua il pagamento dal tuo profilo.
+              </p>
+            </div>
+            <Button
+              asChild
+              size="sm"
+              className="shrink-0 rounded-full bg-namo-orange hover:bg-namo-orange/90"
+            >
+              <Link href="/profilo">Paga ora</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Section 1: Prossimi eventi */}
       <section className="space-y-4">
@@ -122,7 +164,7 @@ export default async function DashboardPage() {
               return (
                 <Link
                   key={reg.id}
-                  href={`/calendario/${reg.eventId}`}
+                  href={`/calendario_del_volontario/${reg.eventId}`}
                   className="group block"
                 >
                   <Card className="transition-all duration-200 group-hover:shadow-natural group-hover:scale-[1.01]">
@@ -263,7 +305,7 @@ export default async function DashboardPage() {
                   return (
                     <Link
                       key={reg.id}
-                      href={`/calendario/${reg.eventId}`}
+                      href={`/calendario_del_volontario/${reg.eventId}`}
                       className="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-accent/50"
                     >
                       <div className="min-w-0 flex-1">

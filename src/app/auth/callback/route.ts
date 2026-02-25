@@ -4,28 +4,19 @@ import { createServerClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/calendario'
+  const next = searchParams.get('next') ?? '/calendario_eventi'
+  const redirectEvent = searchParams.get('redirect_event')
 
   if (code) {
     const supabase = await createServerClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Check if user is pending
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('status')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.status === 'pending') {
-          return NextResponse.redirect(`${origin}/in-attesa`)
-        }
+      // If redirect_event is present, redirect to public calendar with register param
+      if (redirectEvent) {
+        return NextResponse.redirect(
+          `${origin}/calendario_eventi?register=${redirectEvent}`
+        )
       }
 
       return NextResponse.redirect(`${origin}${next}`)

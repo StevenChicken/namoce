@@ -26,7 +26,9 @@ interface UserRow {
   email: string
   firstName: string | null
   lastName: string | null
-  role: string
+  userType: string
+  adminLevel: string
+  clownName: string | null
   status: string
   createdAt: Date
 }
@@ -68,24 +70,51 @@ function StatusBadge({ status }: { status: string }) {
   }
 }
 
+function UserTypeBadge({ userType }: { userType: string }) {
+  if (userType === 'volontario') {
+    return (
+      <Badge variant="secondary" className="bg-namo-cyan/10 text-namo-cyan">
+        Volontario
+      </Badge>
+    )
+  }
+  return <Badge variant="secondary">Utente</Badge>
+}
+
+function AdminLevelBadge({ adminLevel }: { adminLevel: string }) {
+  if (adminLevel === 'super_admin') {
+    return (
+      <Badge variant="default" className="bg-namo-charcoal">
+        Super Admin
+      </Badge>
+    )
+  }
+  if (adminLevel === 'admin') {
+    return (
+      <Badge variant="default" className="bg-namo-orange text-white">
+        Admin
+      </Badge>
+    )
+  }
+  return null
+}
+
 export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
   const filteredUsers = useMemo(() => {
-    const nonPending = users.filter((u) => u.status !== 'pending')
-    return nonPending.filter((u) => {
-      // Status filter
+    return users.filter((u) => {
       if (statusFilter !== 'all' && u.status !== statusFilter) return false
 
-      // Search filter
       if (search) {
         const q = search.toLowerCase()
         const matchesName =
           (u.firstName?.toLowerCase().includes(q) ?? false) ||
           (u.lastName?.toLowerCase().includes(q) ?? false)
         const matchesEmail = u.email.toLowerCase().includes(q)
-        if (!matchesName && !matchesEmail) return false
+        const matchesClown = u.clownName?.toLowerCase().includes(q) ?? false
+        if (!matchesName && !matchesEmail && !matchesClown) return false
       }
 
       return true
@@ -98,7 +127,7 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Cerca per nome o email..."
+            placeholder="Cerca per nome, email o nome clown..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -134,7 +163,9 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
               <TableRow className="bg-muted/20">
                 <TableHead className="font-semibold">Nome</TableHead>
                 <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="font-semibold">Tipo</TableHead>
                 <TableHead className="font-semibold">Ruolo</TableHead>
+                <TableHead className="hidden font-semibold md:table-cell">Nome Clown</TableHead>
                 <TableHead className="font-semibold">Stato</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
@@ -149,14 +180,17 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
                     {u.email}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={u.role === 'super_admin' ? 'default' : 'secondary'}
-                      className={
-                        u.role === 'super_admin' ? 'bg-namo-charcoal' : ''
-                      }
-                    >
-                      {u.role === 'super_admin' ? 'Admin' : 'Volontario'}
-                    </Badge>
+                    <UserTypeBadge userType={u.userType} />
+                  </TableCell>
+                  <TableCell>
+                    <AdminLevelBadge adminLevel={u.adminLevel} />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {u.clownName ? (
+                      <span className="text-sm text-muted-foreground">{u.clownName}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground/40">&mdash;</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={u.status} />
@@ -166,7 +200,9 @@ export function AdminUsersView({ users, currentUserId }: AdminUsersViewProps) {
                       userId={u.id}
                       userName={`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim()}
                       userStatus={u.status}
-                      userRole={u.role}
+                      userType={u.userType}
+                      adminLevel={u.adminLevel}
+                      clownName={u.clownName}
                       currentUserId={currentUserId}
                     />
                   </TableCell>

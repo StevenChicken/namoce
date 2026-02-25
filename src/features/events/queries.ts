@@ -3,7 +3,7 @@ import 'server-only'
 import { db } from '@/db'
 import { events, registrations } from '@/db/schema'
 import { eq, and, sql, desc, asc, gte } from 'drizzle-orm'
-import { requireSuperAdmin, requireAuthenticated } from '@/lib/auth'
+import { requireAdmin, requireAuthenticated, requireVolunteerOrAdmin } from '@/lib/auth'
 
 interface EventFilters {
   status?: 'draft' | 'published' | 'cancelled' | 'archived'
@@ -12,7 +12,7 @@ interface EventFilters {
 }
 
 export async function getAllEvents(filters?: EventFilters) {
-  await requireSuperAdmin()
+  await requireAdmin()
 
   const conditions = []
 
@@ -34,7 +34,7 @@ export async function getAllEvents(filters?: EventFilters) {
 }
 
 export async function getEventById(eventId: string) {
-  await requireSuperAdmin()
+  await requireAdmin()
 
   const eventResult = await db
     .select()
@@ -137,6 +137,40 @@ export async function getPublishedApertoEventsWithCounts() {
     .orderBy(asc(events.startAt))
 }
 
+// ─── getPublishedInternoEventsWithCounts ────────────────
+// For the volunteer calendar — only interno events
+
+export async function getPublishedInternoEventsWithCounts() {
+  await requireVolunteerOrAdmin()
+
+  const now = new Date()
+
+  return db
+    .select({
+      id: events.id,
+      title: events.title,
+      type: events.type,
+      status: events.status,
+      sectors: events.sectors,
+      startAt: events.startAt,
+      endAt: events.endAt,
+      location: events.location,
+      capacity: events.capacity,
+      notes: events.notes,
+      confirmedCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM registrations WHERE registrations.event_id = ${events.id} AND registrations.status = 'confirmed'), 0)`,
+      waitlistCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM registrations WHERE registrations.event_id = ${events.id} AND registrations.status = 'waitlist'), 0)`,
+    })
+    .from(events)
+    .where(
+      and(
+        eq(events.status, 'published'),
+        eq(events.type, 'interno'),
+        gte(events.endAt, now)
+      )
+    )
+    .orderBy(asc(events.startAt))
+}
+
 export async function getPublishedEventsWithCounts() {
   await requireAuthenticated()
 
@@ -208,7 +242,7 @@ export async function getPublishedEventById(eventId: string) {
 }
 
 export async function getEventsByCloneSeries(cloneSeriesId: string) {
-  await requireSuperAdmin()
+  await requireAdmin()
 
   return db
     .select()

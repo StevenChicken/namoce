@@ -62,6 +62,7 @@ import { SeriesEditDialog } from './series-edit-dialog'
 
 interface AdminEventsViewProps {
   initialEvents: Event[]
+  allowedCategories?: string[]
 }
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'cancelled' | 'archived'
@@ -123,7 +124,7 @@ function formatDate(date: Date) {
   })
 }
 
-export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
+export function AdminEventsView({ initialEvents, allowedCategories }: AdminEventsViewProps) {
   const [events, setEvents] = useState(initialEvents)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
@@ -431,6 +432,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={handleFormSuccess}
+        allowedCategories={allowedCategories}
       />
 
       {/* Edit Dialog */}
@@ -441,6 +443,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
         }}
         event={editingEvent ?? undefined}
         onSuccess={handleFormSuccess}
+        allowedCategories={allowedCategories}
       />
 
       {/* Clone Dialog */}
@@ -461,6 +464,7 @@ export function AdminEventsView({ initialEvents }: AdminEventsViewProps) {
         }}
         event={seriesEditEvent ?? undefined}
         onSuccess={handleFormSuccess}
+        allowedCategories={allowedCategories}
       />
 
       {/* Confirm Action Dialog */}

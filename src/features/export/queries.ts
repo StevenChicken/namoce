@@ -43,7 +43,8 @@ export async function getPersonalExportData(userId: string) {
       firstName: users.firstName,
       lastName: users.lastName,
       email: users.email,
-      role: users.role,
+      userType: users.userType,
+      adminLevel: users.adminLevel,
       status: users.status,
       createdAt: users.createdAt,
     })

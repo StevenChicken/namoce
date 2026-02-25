@@ -81,6 +81,7 @@ interface EventFormDialogProps {
   event?: Event
   seriesScope?: 'single' | 'future' | 'all'
   onSuccess: () => void
+  allowedCategories?: string[]
 }
 
 export function EventFormDialog({
@@ -89,7 +90,9 @@ export function EventFormDialog({
   event,
   seriesScope,
   onSuccess,
+  allowedCategories,
 }: EventFormDialogProps) {
+  const availableCategories = allowedCategories ?? EventCategories
   const isEdit = !!event
   const [isPending, startTransition] = useTransition()
 
@@ -312,7 +315,7 @@ export function EventFormDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {EventCategories.map((cat) => (
+                          {availableCategories.map((cat) => (
                             <SelectItem key={cat} value={cat}>
                               {cat}
                             </SelectItem>

@@ -15,7 +15,6 @@ import {
   registerForEventSchema,
   confirmWaitlistJoinSchema,
   cancelRegistrationSchema,
-  externalRegistrationSchema,
 } from './schemas'
 import {
   getActiveRegistrationForUser,
@@ -28,11 +27,10 @@ import {
 import { sendRegistrationConfirmedEmail } from '@/features/notifications/send-registration-confirmed'
 import { sendRegistrationCancelledEmail } from '@/features/notifications/send-registration-cancelled'
 import { sendWaitlistPromotionEmail } from '@/features/notifications/send-waitlist-promotion'
-import { sendExternalRegistrationConfirmedEmail } from '@/features/notifications/send-external-registration-confirmed'
 
 function revalidateRegistrationPaths() {
-  revalidatePath('/calendario')
-  revalidatePath('/eventi')
+  revalidatePath('/calendario_del_volontario')
+  revalidatePath('/calendario_eventi')
   revalidatePath('/admin/eventi')
   revalidatePath('/dashboard')
 }
@@ -51,7 +49,7 @@ export async function registerForEvent(data: unknown) {
 
   // Check user is active
   const userResult = await db
-    .select({ status: users.status })
+    .select({ status: users.status, userType: users.userType, adminLevel: users.adminLevel })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
@@ -79,6 +77,16 @@ export async function registerForEvent(data: unknown) {
 
   if (event.endAt <= new Date()) {
     throw new Error('Questo evento è già terminato')
+  }
+
+  // Access control: interno events require volontario or admin
+  if (event.type === 'interno') {
+    const { userType, adminLevel } = userResult[0]
+    const isVolunteer = userType === 'volontario'
+    const isAdmin = adminLevel === 'admin' || adminLevel === 'super_admin'
+    if (!isVolunteer && !isAdmin) {
+      throw new Error('Solo i volontari possono iscriversi agli eventi interni')
+    }
   }
 
   // Check no existing active registration
@@ -362,16 +370,18 @@ export async function cancelRegistration(data: unknown) {
 
   const reg = regResult[0]
 
-  // Check ownership: user owns it or is super_admin
+  // Check ownership: user owns it or is admin/super_admin
   const userRow = await db
-    .select({ role: users.role })
+    .select({ adminLevel: users.adminLevel })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
 
-  const isSuperAdmin = userRow[0]?.role === 'super_admin'
+  const isAdmin =
+    userRow[0]?.adminLevel === 'admin' ||
+    userRow[0]?.adminLevel === 'super_admin'
 
-  if (reg.userId !== userId && !isSuperAdmin) {
+  if (reg.userId !== userId && !isAdmin) {
     throw new Error('Non autorizzato')
   }
 
@@ -407,7 +417,7 @@ export async function cancelRegistration(data: unknown) {
 
   // Determine audit action type based on who cancelled
   const actionType =
-    isSuperAdmin && reg.userId !== userId
+    isAdmin && reg.userId !== userId
       ? 'REGISTRATION_CANCELLED_BY_ADMIN'
       : 'REGISTRATION_CANCELLED_BY_VOLUNTEER'
 
@@ -441,7 +451,7 @@ export async function cancelRegistration(data: unknown) {
         firstName: cancelledUser[0].firstName || 'Volontario',
         eventTitle: eventForEmail[0].title,
         startAt: eventForEmail[0].startAt,
-        cancelledBy: isSuperAdmin && reg.userId !== userId ? 'admin' : 'self',
+        cancelledBy: isAdmin && reg.userId !== userId ? 'admin' : 'self',
       })
     }
   }
@@ -578,167 +588,4 @@ export async function adminRegisterVolunteer(
 
   revalidateRegistrationPaths()
   return { registrationId: newReg.id }
-}
-
-// ─── registerExternalUser ────────────────────────────────
-
-export async function registerExternalUser(data: unknown) {
-  const parsed = externalRegistrationSchema.safeParse(data)
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
-  }
-
-  const { eventId, firstName, lastName, email, phone } = parsed.data
-
-  // Check event exists, is published, is aperto, and not ended
-  const eventResult = await db
-    .select()
-    .from(events)
-    .where(eq(events.id, eventId))
-    .limit(1)
-
-  if (!eventResult[0]) {
-    throw new Error('Evento non trovato')
-  }
-
-  const event = eventResult[0]
-
-  if (event.status !== 'published') {
-    throw new Error('Questo evento non è disponibile per le iscrizioni')
-  }
-
-  if (event.type !== 'aperto') {
-    throw new Error('Questo evento non è aperto alle iscrizioni esterne')
-  }
-
-  if (event.endAt <= new Date()) {
-    throw new Error('Questo evento è già terminato')
-  }
-
-  // Check capacity
-  const result = await db.transaction(async (tx) => {
-    const [confirmedInternal] = await tx
-      .select({ count: sql<number>`count(*)::int` })
-      .from(registrations)
-      .where(
-        and(
-          eq(registrations.eventId, eventId),
-          eq(registrations.status, 'confirmed')
-        )
-      )
-
-    const [confirmedExternal] = await tx
-      .select({ count: sql<number>`count(*)::int` })
-      .from(externalRegistrations)
-      .where(
-        and(
-          eq(externalRegistrations.eventId, eventId),
-          eq(externalRegistrations.status, 'confirmed')
-        )
-      )
-
-    const totalConfirmed =
-      (confirmedInternal?.count ?? 0) + (confirmedExternal?.count ?? 0)
-
-    if (event.capacity !== null && totalConfirmed >= event.capacity) {
-      throw new Error('Evento al completo')
-    }
-
-    // Check duplicate by email
-    const [existing] = await tx
-      .select({ id: externalRegistrations.id })
-      .from(externalRegistrations)
-      .where(
-        and(
-          eq(externalRegistrations.eventId, eventId),
-          eq(externalRegistrations.email, email),
-          eq(externalRegistrations.status, 'confirmed')
-        )
-      )
-      .limit(1)
-
-    if (existing) {
-      throw new Error('Sei già iscritto a questo evento')
-    }
-
-    // Insert external registration (cancelToken auto-generated by DB default)
-    const [newExtReg] = await tx
-      .insert(externalRegistrations)
-      .values({
-        eventId,
-        firstName,
-        lastName,
-        email,
-        phoneEncrypted: phone ?? null,
-        status: 'confirmed',
-      })
-      .returning({
-        id: externalRegistrations.id,
-        status: externalRegistrations.status,
-        cancelToken: externalRegistrations.cancelToken,
-      })
-
-    return newExtReg
-  })
-
-  // Send external registration confirmation email (fire-and-forget)
-  sendExternalRegistrationConfirmedEmail({
-    email,
-    firstName,
-    eventTitle: event.title,
-    startAt: event.startAt,
-    location: event.location,
-    cancelToken: result.cancelToken,
-  })
-
-  revalidateRegistrationPaths()
-  return { id: result.id, status: result.status }
-}
-
-// ─── cancelExternalRegistration ──────────────────────────
-
-export async function cancelExternalRegistration(cancelToken: string) {
-  // Find external registration by cancel token
-  const extReg = await db
-    .select()
-    .from(externalRegistrations)
-    .where(eq(externalRegistrations.cancelToken, cancelToken))
-    .limit(1)
-
-  if (!extReg[0]) {
-    throw new Error('Iscrizione non trovata')
-  }
-
-  if (extReg[0].status === 'cancelled') {
-    throw new Error('Questa iscrizione è già stata annullata')
-  }
-
-  const eventId = extReg[0].eventId
-
-  // Update status
-  await db
-    .update(externalRegistrations)
-    .set({
-      status: 'cancelled',
-      cancelledAt: new Date(),
-    })
-    .where(eq(externalRegistrations.id, extReg[0].id))
-
-  // Check if this frees a spot for internal waitlist promotion
-  const counts = await getEventCapacityCounts(eventId)
-  const totalConfirmed =
-    counts.confirmedCount + counts.externalConfirmedCount
-  if (counts.capacity !== null && totalConfirmed < counts.capacity) {
-    await promoteFromWaitlist(eventId)
-  }
-
-  // Get event title for return value
-  const eventResult = await db
-    .select({ title: events.title })
-    .from(events)
-    .where(eq(events.id, eventId))
-    .limit(1)
-
-  revalidateRegistrationPaths()
-  return { success: true, eventTitle: eventResult[0]?.title ?? '' }
 }

@@ -13,8 +13,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { AlertTriangle, Bell, Calendar, Mail, Shield } from 'lucide-react'
+import { AlertTriangle, Bell, Calendar, Mail, Shield, Heart } from 'lucide-react'
 import { DeleteAccountDialog } from '@/components/profile/delete-account-dialog'
+import { MembershipPaymentCard } from '@/components/profile/membership-payment-card'
+import { Suspense } from 'react'
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('it-IT', {
@@ -30,16 +32,25 @@ function getInitials(firstName: string | null, lastName: string | null): string 
   return f + l || '?'
 }
 
-function getRoleLabel(role: string): string {
-  return role === 'super_admin' ? 'Super Admin' : 'Volontario'
+function getUserTypeLabel(userType: string): string {
+  return userType === 'volontario' ? 'Volontario' : 'Utente'
+}
+
+function getAdminLevelLabel(adminLevel: string): string {
+  switch (adminLevel) {
+    case 'super_admin':
+      return 'Super Admin'
+    case 'admin':
+      return 'Admin'
+    default:
+      return ''
+  }
 }
 
 function getStatusLabel(status: string): string {
   switch (status) {
     case 'active':
       return 'Attivo'
-    case 'pending':
-      return 'In attesa'
     case 'suspended':
       return 'Sospeso'
     case 'deactivated':
@@ -53,8 +64,6 @@ function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
       return 'bg-namo-green/10 text-namo-green border-namo-green/20'
-    case 'pending':
-      return 'bg-namo-orange/10 text-namo-orange border-namo-orange/20'
     case 'suspended':
     case 'deactivated':
       return 'bg-namo-red/10 text-namo-red border-namo-red/20'
@@ -109,7 +118,14 @@ export default async function ProfiloPage() {
                 >
                   {getStatusLabel(user.status)}
                 </Badge>
-                <Badge variant="secondary">{getRoleLabel(user.role)}</Badge>
+                <Badge variant="secondary">
+                  {getUserTypeLabel(user.userType)}
+                </Badge>
+                {user.adminLevel !== 'none' && (
+                  <Badge variant="default" className="bg-namo-charcoal">
+                    {getAdminLevelLabel(user.adminLevel)}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -118,20 +134,28 @@ export default async function ProfiloPage() {
 
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-sm">
-              <Mail className="text-muted-foreground h-4 w-4 shrink-0" />
-              <span className="text-muted-foreground truncate">
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-muted-foreground">
                 {user.email}
               </span>
             </div>
+            {user.clownName && (
+              <div className="flex items-center gap-3 text-sm">
+                <Heart className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  Nome Clown: <span className="font-medium text-namo-charcoal">{user.clownName}</span>
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-sm">
-              <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="text-muted-foreground">
                 Membro dal {formatDate(user.createdAt)}
               </span>
             </div>
-            {user.role === 'super_admin' && (
+            {user.adminLevel !== 'none' && (
               <div className="flex items-center gap-3 text-sm">
-                <Shield className="text-muted-foreground h-4 w-4 shrink-0" />
+                <Shield className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="text-muted-foreground">Amministratore</span>
               </div>
             )}
@@ -139,6 +163,19 @@ export default async function ProfiloPage() {
 
         </CardContent>
       </Card>
+
+      {/* Membership Payment Card */}
+      {(user.userType === 'volontario' || user.adminLevel !== 'none') && (
+        <Suspense fallback={
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">Caricamento...</p>
+            </CardContent>
+          </Card>
+        }>
+          <MembershipPaymentCard userId={userId} />
+        </Suspense>
+      )}
 
       {/* Notification Preferences Card */}
       <Card>

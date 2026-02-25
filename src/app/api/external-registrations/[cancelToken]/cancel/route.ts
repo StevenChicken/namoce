@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cancelExternalRegistration } from '@/features/registrations/actions'
+import { db } from '@/db'
+import { externalRegistrations } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import { getExternalRegistrationByCancelToken } from '@/features/registrations/queries'
 
 function renderHtml(title: string, message: string, variant: 'success' | 'error' | 'warning') {
@@ -89,7 +91,7 @@ function renderHtml(title: string, message: string, variant: 'success' | 'error'
     <div class="icon-circle"><span>${icon}</span></div>
     <h1>${title}</h1>
     <p>${message}</p>
-    <a href="/eventi" class="btn">Torna agli eventi</a>
+    <a href="/calendario_eventi" class="btn">Torna agli eventi</a>
   </div>
   <p class="footer">&copy; 2026 Namo APS</p>
 </body>
@@ -102,7 +104,6 @@ export async function GET(
 ) {
   const { cancelToken } = await params
 
-  // First check if the registration exists and its current state
   const registration = await getExternalRegistrationByCancelToken(cancelToken)
 
   if (!registration) {
@@ -128,12 +129,19 @@ export async function GET(
   }
 
   try {
-    const result = await cancelExternalRegistration(cancelToken)
+    // Cancel the external registration directly (legacy flow)
+    await db
+      .update(externalRegistrations)
+      .set({
+        status: 'cancelled',
+        cancelledAt: new Date(),
+      })
+      .where(eq(externalRegistrations.id, registration.id))
 
     return new NextResponse(
       renderHtml(
         'Iscrizione annullata',
-        `La tua iscrizione a <strong>${result.eventTitle}</strong> è stata annullata con successo.`,
+        `La tua iscrizione a <strong>${registration.eventTitle}</strong> è stata annullata con successo.`,
         'success'
       ),
       { headers: { 'Content-Type': 'text/html; charset=utf-8' } }

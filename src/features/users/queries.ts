@@ -1,21 +1,7 @@
 import 'server-only'
 import { db } from '@/db'
-import { users, registrations, events } from '@/db/schema'
+import { users, registrations, events, adminCategoryPermissions } from '@/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
-
-export async function getPendingUsers() {
-  return db
-    .select({
-      id: users.id,
-      email: users.email,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .where(eq(users.status, 'pending'))
-    .orderBy(users.createdAt)
-}
 
 export async function getAllUsers() {
   return db
@@ -24,7 +10,9 @@ export async function getAllUsers() {
       email: users.email,
       firstName: users.firstName,
       lastName: users.lastName,
-      role: users.role,
+      clownName: users.clownName,
+      userType: users.userType,
+      adminLevel: users.adminLevel,
       status: users.status,
       createdAt: users.createdAt,
     })
@@ -76,4 +64,33 @@ export async function getUserAttendanceSummary(userId: string) {
     .orderBy(sql`${events.sectors}[1]`)
 
   return rows
+}
+
+// ─── getUserCategoryPermissions ─────────────────────────
+
+export async function getUserCategoryPermissions(userId: string) {
+  return db
+    .select({
+      id: adminCategoryPermissions.id,
+      category: adminCategoryPermissions.category,
+      assignedAt: adminCategoryPermissions.assignedAt,
+    })
+    .from(adminCategoryPermissions)
+    .where(eq(adminCategoryPermissions.userId, userId))
+    .orderBy(adminCategoryPermissions.category)
+}
+
+// ─── getAllCategoryPermissions ───────────────────────────
+
+export async function getAllCategoryPermissions() {
+  return db
+    .select({
+      id: adminCategoryPermissions.id,
+      userId: adminCategoryPermissions.userId,
+      category: adminCategoryPermissions.category,
+      assignedBy: adminCategoryPermissions.assignedBy,
+      assignedAt: adminCategoryPermissions.assignedAt,
+    })
+    .from(adminCategoryPermissions)
+    .orderBy(adminCategoryPermissions.userId, adminCategoryPermissions.category)
 }

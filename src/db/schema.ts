@@ -7,12 +7,19 @@ import {
   integer,
   jsonb,
   pgEnum,
+  unique,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // ─── Enums ──────────────────────────────────────────────
 
-export const userRoleEnum = pgEnum('user_role', ['super_admin', 'volontario'])
+export const userRoleEnum = pgEnum('user_role', ['super_admin', 'volontario']) // deprecated — kept for rollback safety
+export const userTypeEnum = pgEnum('user_type', ['utente', 'volontario'])
+export const adminLevelEnum = pgEnum('admin_level', [
+  'none',
+  'admin',
+  'super_admin',
+])
 export const userStatusEnum = pgEnum('user_status', [
   'pending',
   'active',
@@ -44,6 +51,12 @@ export const externalRegistrationStatusEnum = pgEnum(
   'external_registration_status',
   ['confirmed', 'cancelled']
 )
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'completed',
+  'failed',
+  'refunded',
+])
 
 // ─── Tables ─────────────────────────────────────────────
 
@@ -52,11 +65,12 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   firstName: text('first_name'),
   lastName: text('last_name'),
-  nickname: text('nickname'),
-  role: userRoleEnum('role').notNull().default('volontario'),
-  status: userStatusEnum('status').notNull().default('pending'),
+  clownName: text('clown_name'),
+  role: userRoleEnum('role').notNull().default('volontario'), // deprecated — kept for rollback
+  userType: userTypeEnum('user_type').notNull().default('utente'),
+  adminLevel: adminLevelEnum('admin_level').notNull().default('none'),
+  status: userStatusEnum('status').notNull().default('active'),
   phoneEncrypted: text('phone_encrypted'),
-  sectorsOfInterest: text('sectors_of_interest').array(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
@@ -91,6 +105,22 @@ export const userTagAssignments = pgTable('user_tag_assignments', {
     .notNull()
     .defaultNow(),
 })
+
+export const adminCategoryPermissions = pgTable(
+  'admin_category_permissions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    category: text('category').notNull(),
+    assignedBy: uuid('assigned_by').references(() => users.id),
+    assignedAt: timestamp('assigned_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [unique().on(table.userId, table.category)]
+)
 
 export const events = pgTable('events', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -202,11 +232,59 @@ export const notificationPreferences = pgTable('notification_preferences', {
     .defaultNow(),
 })
 
+export const membershipPayments = pgTable('membership_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  periodYear: integer('period_year').notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  status: paymentStatusEnum('status').notNull().default('pending'),
+  stripeSessionId: text('stripe_session_id'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
+export const donations = pgTable('donations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  amountCents: integer('amount_cents').notNull(),
+  status: paymentStatusEnum('status').notNull().default('pending'),
+  stripeSessionId: text('stripe_session_id'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  message: text('message'),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
+export const appSettings = pgTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedBy: uuid('updated_by').references(() => users.id),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+})
+
 // ─── Relations ──────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   tags: many(userTagAssignments),
   registrations: many(registrations),
+  categoryPermissions: many(adminCategoryPermissions),
+  membershipPayments: many(membershipPayments),
   notificationPreferences: one(notificationPreferences, {
     fields: [users.id],
     references: [notificationPreferences.userId],
@@ -238,6 +316,20 @@ export const userTagAssignmentsRelations = relations(
     }),
     assignedByUser: one(users, {
       fields: [userTagAssignments.assignedBy],
+      references: [users.id],
+    }),
+  })
+)
+
+export const adminCategoryPermissionsRelations = relations(
+  adminCategoryPermissions,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [adminCategoryPermissions.userId],
+      references: [users.id],
+    }),
+    assignedByUser: one(users, {
+      fields: [adminCategoryPermissions.assignedBy],
       references: [users.id],
     }),
   })
@@ -277,6 +369,16 @@ export const externalRegistrationsRelations = relations(
   })
 )
 
+export const membershipPaymentsRelations = relations(
+  membershipPayments,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [membershipPayments.userId],
+      references: [users.id],
+    }),
+  })
+)
+
 // ─── Inferred Types ─────────────────────────────────────
 
 export type User = typeof users.$inferSelect
@@ -293,3 +395,10 @@ export type UserTag = typeof userTags.$inferSelect
 export type NewUserTag = typeof userTags.$inferInsert
 export type UserTagAssignment = typeof userTagAssignments.$inferSelect
 export type NotificationPreference = typeof notificationPreferences.$inferSelect
+export type AdminCategoryPermission = typeof adminCategoryPermissions.$inferSelect
+export type NewAdminCategoryPermission = typeof adminCategoryPermissions.$inferInsert
+export type MembershipPayment = typeof membershipPayments.$inferSelect
+export type NewMembershipPayment = typeof membershipPayments.$inferInsert
+export type Donation = typeof donations.$inferSelect
+export type NewDonation = typeof donations.$inferInsert
+export type AppSetting = typeof appSettings.$inferSelect

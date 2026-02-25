@@ -33,13 +33,14 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes that don't need auth
   const isPublicRoute =
+    pathname.startsWith('/calendario_eventi') ||
     pathname.startsWith('/eventi') ||
+    pathname.startsWith('/donazioni') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/accedi') ||
     pathname.startsWith('/registrati') ||
     pathname.startsWith('/recupera-password') ||
     pathname.startsWith('/reimposta-password') ||
-    pathname.startsWith('/in-attesa') ||
     pathname.startsWith('/auth')
 
   // If not authenticated and trying to access protected route
@@ -53,7 +54,7 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: profile } = await supabase
       .from('users')
-      .select('status, role')
+      .select('status, admin_level')
       .eq('id', user.id)
       .single()
 
@@ -67,25 +68,14 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
       }
 
-      // Pending users can only see /in-attesa
-      if (
-        profile.status === 'pending' &&
-        !pathname.startsWith('/in-attesa') &&
-        !pathname.startsWith('/auth') &&
-        !pathname.startsWith('/api')
-      ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/in-attesa'
-        return NextResponse.redirect(url)
-      }
-
       // Non-admins cannot access /admin routes
       if (
         pathname.startsWith('/admin') &&
-        profile.role !== 'super_admin'
+        profile.admin_level !== 'admin' &&
+        profile.admin_level !== 'super_admin'
       ) {
         const url = request.nextUrl.clone()
-        url.pathname = '/calendario'
+        url.pathname = '/calendario_eventi'
         return NextResponse.redirect(url)
       }
     }

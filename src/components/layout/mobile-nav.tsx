@@ -8,14 +8,21 @@ import { Shield } from 'lucide-react'
 
 interface MobileNavProps {
   isAdmin: boolean
+  isSuperAdmin: boolean
+  isVolunteer: boolean
 }
 
-export function MobileNav({ isAdmin }: MobileNavProps) {
+export function MobileNav({ isAdmin, isSuperAdmin, isVolunteer }: MobileNavProps) {
   const pathname = usePathname()
 
+  const filteredItems = mainNavItems.filter((item) => {
+    if (item.requiresVolunteerOrAdmin) return isVolunteer || isAdmin
+    return true
+  })
+
   const items = isAdmin
-    ? [...mainNavItems, { label: 'ADMIN', href: '/admin/utenti', icon: Shield, adminOnly: true }]
-    : mainNavItems
+    ? [...filteredItems, { label: 'ADMIN', href: isSuperAdmin ? '/admin/utenti' : '/admin/eventi', icon: Shield, adminOnly: true as const }]
+    : filteredItems
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-card shadow-[0_-2px_8px_rgba(0,0,0,0.06)] md:hidden">
@@ -24,6 +31,7 @@ export function MobileNav({ isAdmin }: MobileNavProps) {
           const Icon = item.icon
           const isActive =
             pathname === item.href ||
+            pathname.startsWith(item.href + '/') ||
             (item.adminOnly && pathname.startsWith('/admin'))
 
           return (

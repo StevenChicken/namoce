@@ -8,15 +8,28 @@ import { mainNavItems, adminNavItems } from './nav-items'
 
 interface DesktopSidebarProps {
   isAdmin: boolean
+  isSuperAdmin: boolean
+  isVolunteer: boolean
 }
 
-export function DesktopSidebar({ isAdmin }: DesktopSidebarProps) {
+export function DesktopSidebar({ isAdmin, isSuperAdmin, isVolunteer }: DesktopSidebarProps) {
   const pathname = usePathname()
+
+  const filteredMainItems = mainNavItems.filter((item) => {
+    if (item.requiresVolunteerOrAdmin) return isVolunteer || isAdmin
+    return true
+  })
+
+  const filteredAdminItems = adminNavItems.filter((item) => {
+    if (item.superAdminOnly) return isSuperAdmin
+    if (item.adminOnly) return isAdmin
+    return true
+  })
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-border/60 md:bg-card">
       <div className="flex h-16 items-center border-b border-border/60 px-6">
-        <Link href="/calendario" className="flex items-center gap-2">
+        <Link href="/calendario_eventi" className="flex items-center gap-2">
           <Image
             src="/logo.png"
             alt="Namo APS"
@@ -28,9 +41,9 @@ export function DesktopSidebar({ isAdmin }: DesktopSidebarProps) {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
-        {mainNavItems.map((item) => {
+        {filteredMainItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
           return (
             <Link
@@ -49,15 +62,15 @@ export function DesktopSidebar({ isAdmin }: DesktopSidebarProps) {
           )
         })}
 
-        {isAdmin && (
+        {isAdmin && filteredAdminItems.length > 0 && (
           <>
             <div className="my-3 border-t border-border/60" />
             <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-widest text-namo-muted">
               Amministrazione
             </p>
-            {adminNavItems.map((item) => {
+            {filteredAdminItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
               return (
                 <Link

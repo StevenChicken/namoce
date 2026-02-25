@@ -1,18 +1,32 @@
 'use server'
 
 import { db } from '@/db'
-import { users, notificationPreferences } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { users, adminCategoryPermissions, notificationPreferences } from '@/db/schema'
+import { eq, and, sql } from 'drizzle-orm'
 import { createAuditEntry } from '@/lib/audit'
 import { requireAuthenticated, requireSuperAdmin } from '@/lib/auth'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { sendAccountApprovedEmail } from '@/features/notifications/send-account-approved'
 import { revalidatePath } from 'next/cache'
+import {
+  changeUserTypeSchema,
+  changeAdminLevelSchema,
+  updateClownNameSchema,
+  assignCategoryPermissionSchema,
+  removeCategoryPermissionSchema,
+} from './schemas'
+import { sendPromotedToVolontario } from '@/features/notifications/send-promoted-to-volontario'
 
-export async function approveVolunteer(userId: string) {
+// ─── changeUserType ─────────────────────────────────────
+
+export async function changeUserType(data: unknown) {
   const actorId = await requireSuperAdmin()
 
-  // Get current state for audit
+  const parsed = changeUserTypeSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message)
+  }
+
+  const { userId, userType } = parsed.data
+
   const currentUser = await db
     .select()
     .from(users)
@@ -23,86 +37,241 @@ export async function approveVolunteer(userId: string) {
     throw new Error('Utente non trovato')
   }
 
-  if (currentUser[0].status !== 'pending') {
-    throw new Error('L\'utente non è in attesa di approvazione')
+  const beforeState = {
+    userType: currentUser[0].userType,
+  }
+
+  await db
+    .update(users)
+    .set({ userType, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+
+  await createAuditEntry({
+    actorId,
+    actionType: 'USER_TYPE_CHANGED',
+    entityType: 'user',
+    entityId: userId,
+    beforeState,
+    afterState: { userType },
+  })
+
+  // Send promotion email when promoting to volontario
+  if (userType === 'volontario' && currentUser[0].userType !== 'volontario') {
+    sendPromotedToVolontario({
+      email: currentUser[0].email,
+      firstName: currentUser[0].firstName ?? 'Utente',
+    }).catch((err: unknown) => console.error('Errore invio email promozione volontario:', err))
+  }
+
+  revalidatePath('/admin/utenti')
+}
+
+// ─── changeAdminLevel ───────────────────────────────────
+
+export async function changeAdminLevel(data: unknown) {
+  const actorId = await requireSuperAdmin()
+
+  const parsed = changeAdminLevelSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message)
+  }
+
+  const { userId, adminLevel } = parsed.data
+
+  const currentUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (!currentUser[0]) {
+    throw new Error('Utente non trovato')
+  }
+
+  // Last super_admin protection: if demoting a super_admin, ensure at least one other exists
+  if (
+    currentUser[0].adminLevel === 'super_admin' &&
+    adminLevel !== 'super_admin'
+  ) {
+    const [superAdminCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(users)
+      .where(eq(users.adminLevel, 'super_admin'))
+
+    if ((superAdminCount?.count ?? 0) <= 1) {
+      throw new Error(
+        'Non è possibile rimuovere l\'ultimo super admin. Promuovi prima un altro utente.'
+      )
+    }
   }
 
   const beforeState = {
-    status: currentUser[0].status,
-    role: currentUser[0].role,
+    adminLevel: currentUser[0].adminLevel,
   }
 
-  // Update status
   await db
     .update(users)
-    .set({
-      status: 'active',
-      approvedAt: new Date(),
-      approvedBy: actorId,
+    .set({ adminLevel, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+
+  await createAuditEntry({
+    actorId,
+    actionType: 'ADMIN_LEVEL_CHANGED',
+    entityType: 'user',
+    entityId: userId,
+    beforeState,
+    afterState: { adminLevel },
+  })
+
+  revalidatePath('/admin/utenti')
+}
+
+// ─── updateClownName ────────────────────────────────────
+
+export async function updateClownName(data: unknown) {
+  const actorId = await requireSuperAdmin()
+
+  const parsed = updateClownNameSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message)
+  }
+
+  const { userId, clownName } = parsed.data
+
+  const currentUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (!currentUser[0]) {
+    throw new Error('Utente non trovato')
+  }
+
+  if (currentUser[0].userType !== 'volontario') {
+    throw new Error('Solo i volontari possono avere un Nome Clown')
+  }
+
+  const beforeState = {
+    clownName: currentUser[0].clownName,
+  }
+
+  await db
+    .update(users)
+    .set({ clownName, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+
+  await createAuditEntry({
+    actorId,
+    actionType: 'CLOWN_NAME_UPDATED',
+    entityType: 'user',
+    entityId: userId,
+    beforeState,
+    afterState: { clownName },
+  })
+
+  revalidatePath('/admin/utenti')
+}
+
+// ─── assignCategoryPermission ───────────────────────────
+
+export async function assignCategoryPermission(data: unknown) {
+  const actorId = await requireSuperAdmin()
+
+  const parsed = assignCategoryPermissionSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message)
+  }
+
+  const { userId, category } = parsed.data
+
+  // Verify user exists and is admin
+  const targetUser = await db
+    .select({ adminLevel: users.adminLevel })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (!targetUser[0]) {
+    throw new Error('Utente non trovato')
+  }
+
+  if (targetUser[0].adminLevel !== 'admin') {
+    throw new Error('Le autorizzazioni per categoria sono solo per gli admin')
+  }
+
+  await db
+    .insert(adminCategoryPermissions)
+    .values({
+      userId,
+      category,
+      assignedBy: actorId,
     })
-    .where(eq(users.id, userId))
+    .onConflictDoNothing()
 
-  // Confirm the user's email in auth.users (ensures login works even if
-  // email confirmations are enabled in the Supabase dashboard)
-  const admin = createAdminClient()
-  await admin.auth.admin.updateUserById(userId, { email_confirm: true })
-
-  // Create audit log
   await createAuditEntry({
     actorId,
-    actionType: 'USER_APPROVED',
-    entityType: 'user',
+    actionType: 'CATEGORY_PERMISSION_ASSIGNED',
+    entityType: 'admin_category_permission',
     entityId: userId,
-    beforeState,
-    afterState: { status: 'active' },
-  })
-
-  // Send approval email
-  await sendAccountApprovedEmail({
-    email: currentUser[0].email,
-    firstName: currentUser[0].firstName ?? 'Volontario',
+    afterState: { userId, category },
   })
 
   revalidatePath('/admin/utenti')
 }
 
-export async function rejectVolunteer(userId: string) {
+// ─── removeCategoryPermission ───────────────────────────
+
+export async function removeCategoryPermission(data: unknown) {
   const actorId = await requireSuperAdmin()
 
-  // Get current state for audit
-  const currentUser = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1)
-
-  if (!currentUser[0]) {
-    throw new Error('Utente non trovato')
+  const parsed = removeCategoryPermissionSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0].message)
   }
 
-  const beforeState = {
-    status: currentUser[0].status,
-    role: currentUser[0].role,
-  }
+  const { userId, category } = parsed.data
 
-  // Update status to deactivated
   await db
-    .update(users)
-    .set({ status: 'deactivated' })
-    .where(eq(users.id, userId))
+    .delete(adminCategoryPermissions)
+    .where(
+      and(
+        eq(adminCategoryPermissions.userId, userId),
+        eq(adminCategoryPermissions.category, category)
+      )
+    )
 
-  // Create audit log
   await createAuditEntry({
     actorId,
-    actionType: 'USER_DEACTIVATED',
-    entityType: 'user',
+    actionType: 'CATEGORY_PERMISSION_REMOVED',
+    entityType: 'admin_category_permission',
     entityId: userId,
-    beforeState,
-    afterState: { status: 'deactivated' },
+    beforeState: { userId, category },
   })
 
   revalidatePath('/admin/utenti')
 }
+
+// ─── fetchUserCategoryPermissions ────────────────────────
+// Server action wrapper so client components can fetch category permissions
+
+export async function fetchUserCategoryPermissions(userId: string) {
+  await requireSuperAdmin()
+
+  const perms = await db
+    .select({
+      id: adminCategoryPermissions.id,
+      userId: adminCategoryPermissions.userId,
+      category: adminCategoryPermissions.category,
+    })
+    .from(adminCategoryPermissions)
+    .where(eq(adminCategoryPermissions.userId, userId))
+    .orderBy(adminCategoryPermissions.category)
+
+  return perms
+}
+
+// ─── suspendUser ────────────────────────────────────────
 
 export async function suspendUser(userId: string) {
   const actorId = await requireSuperAdmin()
@@ -127,7 +296,8 @@ export async function suspendUser(userId: string) {
 
   const beforeState = {
     status: currentUser[0].status,
-    role: currentUser[0].role,
+    userType: currentUser[0].userType,
+    adminLevel: currentUser[0].adminLevel,
   }
 
   await db
@@ -146,6 +316,8 @@ export async function suspendUser(userId: string) {
 
   revalidatePath('/admin/utenti')
 }
+
+// ─── reactivateUser ─────────────────────────────────────
 
 export async function reactivateUser(userId: string) {
   const actorId = await requireSuperAdmin()
@@ -170,7 +342,8 @@ export async function reactivateUser(userId: string) {
 
   const beforeState = {
     status: currentUser[0].status,
-    role: currentUser[0].role,
+    userType: currentUser[0].userType,
+    adminLevel: currentUser[0].adminLevel,
   }
 
   await db
@@ -189,6 +362,8 @@ export async function reactivateUser(userId: string) {
 
   revalidatePath('/admin/utenti')
 }
+
+// ─── deactivateUser ─────────────────────────────────────
 
 export async function deactivateUser(userId: string) {
   const actorId = await requireSuperAdmin()
@@ -213,7 +388,8 @@ export async function deactivateUser(userId: string) {
 
   const beforeState = {
     status: currentUser[0].status,
-    role: currentUser[0].role,
+    userType: currentUser[0].userType,
+    adminLevel: currentUser[0].adminLevel,
   }
 
   await db
@@ -232,6 +408,8 @@ export async function deactivateUser(userId: string) {
 
   revalidatePath('/admin/utenti')
 }
+
+// ─── requestAccountDeletion ─────────────────────────────
 
 export async function requestAccountDeletion() {
   const userId = await requireAuthenticated()
@@ -269,6 +447,8 @@ export async function requestAccountDeletion() {
   return { success: true }
 }
 
+// ─── deleteUserData ─────────────────────────────────────
+
 export async function deleteUserData(userId: string) {
   const actorId = await requireSuperAdmin()
 
@@ -290,7 +470,7 @@ export async function deleteUserData(userId: string) {
     firstName: currentUser[0].firstName,
     lastName: currentUser[0].lastName,
     email: currentUser[0].email,
-    nickname: currentUser[0].nickname,
+    clownName: currentUser[0].clownName,
     status: currentUser[0].status,
   }
 
@@ -303,9 +483,8 @@ export async function deleteUserData(userId: string) {
       firstName: '[Rimosso]',
       lastName: '[Rimosso]',
       email: anonymizedEmail,
-      nickname: null,
+      clownName: null,
       phoneEncrypted: null,
-      sectorsOfInterest: null,
       notes: null,
       status: 'deactivated',
       updatedAt: new Date(),
@@ -316,6 +495,11 @@ export async function deleteUserData(userId: string) {
   await db
     .delete(notificationPreferences)
     .where(eq(notificationPreferences.userId, userId))
+
+  // Delete category permissions
+  await db
+    .delete(adminCategoryPermissions)
+    .where(eq(adminCategoryPermissions.userId, userId))
 
   await createAuditEntry({
     actorId,

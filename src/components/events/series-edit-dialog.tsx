@@ -22,6 +22,7 @@ interface SeriesEditDialogProps {
   onOpenChange: (open: boolean) => void
   event?: Event
   onSuccess: () => void
+  allowedCategories?: string[]
 }
 
 export function SeriesEditDialog({
@@ -29,6 +30,7 @@ export function SeriesEditDialog({
   onOpenChange,
   event,
   onSuccess,
+  allowedCategories,
 }: SeriesEditDialogProps) {
   const [scope, setScope] = useState<SeriesScope>('single')
   const [showForm, setShowForm] = useState(false)
@@ -60,6 +62,7 @@ export function SeriesEditDialog({
         event={event}
         seriesScope={scope}
         onSuccess={handleFormSuccess}
+        allowedCategories={allowedCategories}
       />
     )
   }

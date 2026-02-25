@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import Link from 'next/link'
 import { CalendarDays, MapPin, Users, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ExternalRegistrationDialog } from './external-registration-dialog'
 
 export interface PublicEvent {
   id: string
@@ -19,6 +18,7 @@ export interface PublicEvent {
 
 interface PublicEventsViewProps {
   events: PublicEvent[]
+  isAuthenticated?: boolean
 }
 
 function formatDate(date: Date): string {
@@ -46,10 +46,10 @@ function formatShortDate(date: Date): { day: string; month: string; weekday: str
 
 function EventCard({
   event,
-  onRegister,
+  isAuthenticated,
 }: {
   event: PublicEvent
-  onRegister: (event: PublicEvent) => void
+  isAuthenticated: boolean
 }) {
   const startAt = new Date(event.startAt)
   const endAt = new Date(event.endAt)
@@ -131,13 +131,25 @@ function EventCard({
             >
               Completo
             </Button>
-          ) : (
+          ) : isAuthenticated ? (
             <Button
-              onClick={() => onRegister(event)}
+              asChild
               className="rounded-full bg-namo-charcoal font-semibold hover:bg-namo-charcoal/90"
               size="sm"
             >
-              Iscriviti
+              <Link href={`/calendario_eventi/${event.id}`}>
+                Iscriviti
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              className="rounded-full bg-namo-charcoal font-semibold hover:bg-namo-charcoal/90"
+              size="sm"
+            >
+              <Link href={`/registrati?redirect_event=${event.id}`}>
+                Iscriviti
+              </Link>
             </Button>
           )}
         </div>
@@ -146,24 +158,20 @@ function EventCard({
   )
 }
 
-export function PublicEventsView({ events }: PublicEventsViewProps) {
-  const [registeringEvent, setRegisteringEvent] = useState<PublicEvent | null>(null)
-
+export function PublicEventsView({ events, isAuthenticated = false }: PublicEventsViewProps) {
   return (
     <div className="space-y-6">
-      {/* Events list */}
       {events.length > 0 ? (
         <div className="space-y-4">
           {events.map(event => (
             <EventCard
               key={event.id}
               event={event}
-              onRegister={setRegisteringEvent}
+              isAuthenticated={isAuthenticated}
             />
           ))}
         </div>
       ) : (
-        /* No events at all */
         <div className="flex flex-col items-center gap-4 py-20 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-namo-cyan/8">
             <CalendarDays className="h-10 w-10 text-namo-cyan" />
@@ -176,16 +184,6 @@ export function PublicEventsView({ events }: PublicEventsViewProps) {
           </p>
         </div>
       )}
-
-      {/* External Registration Dialog */}
-      <ExternalRegistrationDialog
-        open={!!registeringEvent}
-        onOpenChange={(open) => {
-          if (!open) setRegisteringEvent(null)
-        }}
-        eventId={registeringEvent?.id ?? ''}
-        eventTitle={registeringEvent?.title ?? ''}
-      />
     </div>
   )
 }
