@@ -10,7 +10,7 @@
 
 **Namo** is a web application for a volunteer association to manage event registration, waitlists, attendance tracking, and email notifications. It replaces a manual Google Calendar + Excel workflow.
 
-- ~50–200 registered volunteers (Volontari), 3–5 Super Admins, variable external users (Utenti Esterni)
+- ~50–200 registered users, some promoted to Volontario, 3–5 Super Admins, delegated Admins with category permissions
 - Italian UI only (hardcoded, no i18n framework needed)
 - Mobile-first: volunteers use it on their phones between activities
 
@@ -20,7 +20,7 @@
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Framework | **Next.js 15** (App Router, TypeScript) | Server Components + Server Actions for all mutations |
+| Framework | **Next.js 16** (App Router, TypeScript) | Server Components + Server Actions for all mutations |
 | Database & Auth | **Supabase** (PostgreSQL + RLS + Auth + Storage + Realtime) | RLS is the authoritative access control layer |
 | ORM | **Drizzle ORM** | Schema lives in `/src/db/schema.ts` — single source of truth |
 | UI | **shadcn/ui + Tailwind CSS** | Components in `/src/components/ui/` |
@@ -39,16 +39,17 @@
 /
 ├── src/
 │   ├── app/                        # Next.js App Router
-│   │   ├── (auth)/                 # Login, register, password-reset pages
+│   │   ├── (auth)/                 # Login, register pages
 │   │   ├── (app)/                  # Protected routes (requires session)
-│   │   │   ├── calendario/         # Event calendar (volunteer view)
+│   │   │   ├── calendario_del_volontario/  # Volunteer calendar (interno events)
 │   │   │   ├── dashboard/          # Volunteer personal dashboard
+│   │   │   ├── profilo/            # User profile + preferences
 │   │   │   └── admin/              # Admin-only routes
 │   │   │       ├── eventi/         # Event management
 │   │   │       ├── utenti/         # User management
 │   │   │       ├── audit/          # Audit log
 │   │   │       └── export/         # Data export
-│   │   ├── eventi/                 # Public Aperto events (no auth)
+│   │   ├── calendario_eventi/      # Public event listing (aperto, auth-aware)
 │   │   └── api/                    # Custom API routes (webhooks, .ics, CSV)
 │   ├── components/
 │   │   ├── ui/                     # shadcn/ui base components (do not edit)
@@ -89,12 +90,13 @@ All Drizzle table definitions live here. Key tables:
 
 | Table | Purpose |
 |---|---|
-| `users` | Internal volunteers and admins. `role`: `super_admin` \| `volontario`. `status`: `pending` \| `active` \| `suspended` \| `deactivated`. `phone_encrypted` stored encrypted. |
+| `users` | All users. `user_type`: `utente` \| `volontario`. `admin_level`: `none` \| `admin` \| `super_admin`. `status`: `active` \| `suspended` \| `deactivated`. `clown_name` optional. No pending approval — users are active immediately. |
+| `admin_category_permissions` | Per-admin category restrictions. Super admins have implicit access to all categories. |
 | `user_tags` | Qualification tags (e.g. "Clown Terapia Certificato"). Admin-managed. |
 | `user_tag_assignments` | Many-to-many: users ↔ tags |
 | `events` | All events. `type`: `interno` \| `aperto`. `status`: `draft` \| `published` \| `cancelled` \| `archived`. `clone_series_id` groups bulk-cloned events. |
-| `registrations` | Internal volunteer registrations. `status`: `confirmed` \| `waitlist` \| `cancelled`. `attendance_status`: `present` \| `absent` \| `no_show`. |
-| `external_registrations` | No-account registrations for Aperto events. Has `cancel_token` (UUID) for tokenised email cancellation. |
+| `registrations` | Volunteer registrations. `status`: `confirmed` \| `waitlist` \| `cancelled`. `attendance_status`: `present` \| `absent` \| `no_show`. |
+| `external_registrations` | Legacy table (no longer used for new registrations — all users must create accounts). |
 | `audit_log` | Append-only. Records all admin actions with `before_state`/`after_state` (JSONB). NEVER UPDATE or DELETE. |
 | `notification_preferences` | Per-user opt-out of informational emails (transactional emails cannot be opted out). |
 
@@ -102,26 +104,37 @@ All Drizzle table definitions live here. Key tables:
 
 ## 5. User Roles & Access Control
 
-**THREE roles only:**
-- `super_admin` — full access to everything
-- `volontario` — can register for events, view own data
-- External users — no account, register for `aperto` events via just-in-time form
+**Two-dimensional role model:**
+- `user_type`: `utente` (basic user, can view aperto events) | `volontario` (can register for interno events)
+- `admin_level`: `none` | `admin` (delegated, restricted to assigned categories) | `super_admin` (full access)
+- No external/anonymous users — all users must create an account
+
+**Auth helpers** (in `src/lib/auth.ts`):
+- `requireAuthenticated()` — any logged-in user
+- `requireVolunteerOrAdmin()` — volontario OR any admin level
+- `requireAdmin()` — admin or super_admin
+- `requireSuperAdmin()` — super_admin only
+
+**Category-based admin authorization:**
+- `admin_category_permissions` table links admin users to specific event categories
+- Super admins bypass category restrictions (implicit access to all)
+- Regular admins can only manage events in their assigned categories
 
 **Critical rule:** All access control MUST be enforced server-side (Server Actions / API routes) AND at the database layer (Supabase RLS). Client-side checks are UI-only conveniences.
 
 **Key RLS rules:**
-- `users.phone_encrypted` — never returned to non-admin
-- `events` — volontario sees only `status=published`; esterno sees only `published + type=aperto`
-- `registrations` — volontario can read/write own rows; no DELETE; admin reads all
+- `events` — non-admins see only `status=published`; aperto events visible to all authenticated users
+- `registrations` — users can read/write own rows; no DELETE; admin reads all
 - `audit_log` — INSERT only for authenticated; SELECT only for `super_admin`; no UPDATE/DELETE ever
+- `admin_category_permissions` — super_admin can read/write; admin can read own rows
 
 ---
 
 ## 6. Event Types & Registration Logic
 
 **Event types:**
-- `interno` — visible only to authenticated volunteers
-- `aperto` — publicly visible, external users can register
+- `interno` — visible only to volunteers and admins (via `/calendario_del_volontario`)
+- `aperto` — visible to all authenticated users (via `/calendario_eventi`)
 
 **Registration states:** `confirmed` → `waitlist` → `cancelled`
 
@@ -129,7 +142,7 @@ All Drizzle table definitions live here. Key tables:
 - FIFO order
 - Waitlist position = computed (`COUNT` of waitlisted rows with earlier `registered_at`), NOT stored as a mutable integer
 - On cancellation: auto-promote first waitlisted volunteer, send promotion email with tokenised refusal link
-- External users: NO waitlist in MVP. If `aperto` event is full, they see "evento al completo" and cannot register.
+- All users must have an account to register (no anonymous/external registration)
 
 **Attendance (trust model):**
 - After event end: all confirmed (non-cancelled) registrants auto-marked `present` via `pg_cron`
@@ -168,24 +181,24 @@ All Drizzle table definitions live here. Key tables:
 ### Audit logging
 - Every admin action MUST create an `audit_log` entry.
 - Helper: `await createAuditEntry({ actorId, actionType, entityType, entityId, beforeState, afterState })`
-- `actionType` values: `EVENT_CREATED`, `EVENT_UPDATED`, `EVENT_CANCELLED`, `EVENT_DELETED`, `REGISTRATION_CANCELLED_BY_ADMIN`, `ATTENDANCE_CORRECTED`, `CAPACITY_OVERRIDE`, `USER_APPROVED`, `USER_SUSPENDED`, `USER_DEACTIVATED`, `USER_DELETED`, `WAITLIST_ORDER_OVERRIDE`, `ROLE_CHANGED`
+- `actionType` values: `EVENT_CREATED`, `EVENT_UPDATED`, `EVENT_CANCELLED`, `EVENT_DELETED`, `REGISTRATION_CANCELLED_BY_ADMIN`, `ATTENDANCE_CORRECTED`, `CAPACITY_OVERRIDE`, `USER_TYPE_CHANGED`, `ADMIN_LEVEL_CHANGED`, `CLOWN_NAME_UPDATED`, `CATEGORY_PERMISSION_ASSIGNED`, `CATEGORY_PERMISSION_REMOVED`, `USER_SUSPENDED`, `USER_DEACTIVATED`, `USER_REACTIVATED`, `USER_DELETED`, `ACCOUNT_DELETION_REQUESTED`, `WAITLIST_ORDER_OVERRIDE`, `ROLE_CHANGED`
 
 ---
 
 ## 8. Email Notifications (Resend + React Email)
 
-Templates in `/src/emails/`. 7 types (all transactional except `new_event_in_sector`):
+Templates in `/src/emails/`. Email types (all transactional except `new-event-in-sector`):
 
 | Template file | Trigger | Recipient |
 |---|---|---|
+| `welcome.tsx` | User creates account | New user |
+| `promoted-to-volontario.tsx` | Admin promotes user to volontario | Promoted user |
 | `registration-confirmed.tsx` | Volunteer confirms registration | Volunteer |
 | `registration-cancelled.tsx` | Volunteer or admin cancels | Volunteer |
 | `waitlist-promotion.tsx` | Spot opens up, volunteer promoted | Promoted volunteer (includes refusal link) |
 | `event-reminder.tsx` | X hours before event (`reminder_hours`) | All confirmed volunteers |
 | `event-modified.tsx` | Admin edits published event | All registered volunteers |
-| `new-event-in-sector.tsx` | Admin publishes event | Volunteers with matching sector preference (can opt out) |
-| `account-approved.tsx` | Admin approves pending account | New volunteer |
-| `external-registration-confirmed.tsx` | External user registers | External user (includes cancel link) |
+| `new-event-in-sector.tsx` | Admin publishes event | Volunteers with matching category preference (can opt out) |
 
 **All emails sent within 60 seconds of trigger event.**
 Volunteers who have cancelled do NOT receive reminders (filter on query).
@@ -278,17 +291,18 @@ Before marking any feature complete:
 | **M6 — Dashboards & Export** | Volunteer dashboard, admin user management, audit log view, CSV/Excel export, .ics download |
 | **M7 — Polish & Launch** | Italian copy review, mobile pass, empty/error/loading states, Sentry, GDPR deletion, load test, production deploy |
 
-**Currently targeting:** M1
+**Status:** All milestones complete. Post-MVP refactoring (role model, admin categories, navigation) applied.
 
 ---
 
 ## 15. Known Decisions (ADRs)
 
-- **Auth:** Supabase Auth (email+password + Google OAuth). External users have NO account.
-- **Access control:** Supabase RLS as defence-in-depth. Application code also checks permissions.
+- **Auth:** Supabase Auth (email+password + Google OAuth). All users must create accounts.
+- **Role model:** Two-dimensional — `userType` (utente/volontario) + `adminLevel` (none/admin/super_admin). No approval flow; users active immediately.
+- **Access control:** Supabase RLS as defence-in-depth. Application code also checks permissions. Admins restricted by category permissions.
 - **Attendance:** Trust model — confirmed = present automatically. Admin corrects exceptions.
 - **Late cancellation:** Flagged but NEVER blocked. Volunteer can always cancel.
-- **External waitlist:** NOT in MVP. If Aperto event is full, external user is turned away.
+- **No anonymous registration:** External registration system removed. All users must sign up.
 - **Recurring events:** Clone-based only. No recurrence rule engine.
 - **Waitlist position:** Computed value (COUNT), not stored integer, to prevent drift on admin overrides.
 
@@ -297,13 +311,11 @@ Before marking any feature complete:
 ## 16. Out of Scope (MVP)
 
 Do NOT implement these:
-- Sector Admin role (V2)
 - Compagno Adulto hour tracking (V2)
 - SMS / push notifications
 - Multi-language / i18n
 - Live iCal webcal:// subscription feed
 - Automated PDF reports
-- Payment processing
 - Sub-event / time-slot structure
 
 ---
@@ -371,4 +383,4 @@ The following skills are installed globally and available to Claude Code. Invoke
 
 ---
 
-*Last updated: 23 February 2026 — Namo MVP v1.0*
+*Last updated: 25 February 2026 — Post-MVP role refactor*
