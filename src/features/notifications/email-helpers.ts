@@ -10,7 +10,8 @@ export function getResendClient() {
 }
 
 // Shared email from address
-export const EMAIL_FROM = 'Namo APS <noreply@namo.app>'
+// TODO: Cambiare a 'Namo APS <noreply@namoaps.com>' dopo verifica DNS su Resend
+export const EMAIL_FROM = 'Namo APS <onboarding@resend.dev>'
 
 // Get the app URL
 export function getAppUrl(): string {
